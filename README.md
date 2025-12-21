@@ -6,7 +6,7 @@ Backend de l'application StudySynergy, plateforme d'apprentissage assistée par 
 
 - **FastAPI** : Framework web Python moderne et rapide
 - **Firebase** : Authentification, base de données (Firestore) et stockage de fichiers
-- **Google Gemini 1.5 Pro** : Moteur d'IA pour l'analyse de documents et la génération de contenu
+- **Google gemini-2.5-flash** : Moteur d'IA pour l'analyse de documents et la génération de contenu
 
 ## 📋 Prérequis
 

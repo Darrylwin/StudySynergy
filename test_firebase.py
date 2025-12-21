@@ -77,7 +77,7 @@ def test_configuration():
     print("\n5️⃣ Test Google Gemini...")
     try:
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content("Dis juste 'Hello' en une ligne")
         print(f"✅ Gemini accessible: {response.text.strip()}")
     except Exception as e:

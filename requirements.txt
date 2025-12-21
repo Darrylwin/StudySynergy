@@ -11,10 +11,11 @@ google-generativeai
 
 # JWT et sécurité
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt
 
 # Utilitaires
 python-dotenv
 pydantic
+pydantic[email]
 pydantic-settings
 python-dateutil

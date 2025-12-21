@@ -24,7 +24,7 @@ class FirebaseService:
     # ===== USERS =====
 
     @staticmethod
-    def create_user(email: str, hashed_password: str, name:  str) -> str:
+    def create_user(email: str, hashed_password: str, name: str) -> str:
         """Crée un utilisateur dans Firestore"""
         user_ref = db.collection('users').document()
         user_id = user_ref.id
@@ -41,14 +41,15 @@ class FirebaseService:
     @staticmethod
     def get_user_by_email(email: str) -> Optional[dict]:
         """Récupère un utilisateur par email"""
-        users = db.collection('users').where('email', '==', email).limit(1).stream()
+        # Utilisation du keyword argument 'filter' au lieu des positionnels
+        users = db.collection('users').where(filter=firestore.FieldFilter('email', '==', email)).limit(1).stream()
 
         for user in users:
             return {'user_id': user.id, **user.to_dict()}
         return None
 
     @staticmethod
-    def get_user_by_id(user_id:  str) -> Optional[dict]:
+    def get_user_by_id(user_id: str) -> Optional[dict]:
         """Récupère un utilisateur par ID"""
         doc = db.collection('users').document(user_id).get()
         if doc.exists:
@@ -68,7 +69,7 @@ class FirebaseService:
         session_ref = db.collection('sessions').document()
         session_id = session_ref.id
 
-        session_ref. set({
+        session_ref.set({
             'userId': user_id,
             'title': title,
             'summary': summary,
@@ -89,8 +90,8 @@ class FirebaseService:
     @staticmethod
     def get_user_sessions(user_id: str) -> List[dict]:
         """Récupère toutes les sessions d'un utilisateur"""
-        sessions = db.collection('sessions')\
-            .where('userId', '==', user_id)\
+        sessions = db. collection('sessions')\
+            .where(filter=firestore.FieldFilter('userId', '==', user_id))\
             .order_by('createdAt', direction=firestore.Query.DESCENDING)\
             .stream()
 
@@ -111,7 +112,7 @@ class FirebaseService:
                      .collection('files').document()
         file_id = file_ref.id
 
-        file_ref.set({
+        file_ref. set({
             'fileName': file_name,
             'fileUrl': file_url,
             'geminiUri': gemini_uri,

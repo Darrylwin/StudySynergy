@@ -1,48 +1,53 @@
 """
-Point d'entrée de l'application FastAPI.
+Initialisation de l'application FastAPI.
 """
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware. cors import CORSMiddleware
 from app.routes import auth, session, tools, files
-from app.config import settings
+from app. config import settings
 
+# Créer l'application FastAPI
 app = FastAPI(
     title="StudySynergy API",
-    description="Backend API pour StudySynergy - Plateforme d'apprentissage IA",
+    description="Backend API pour StudySynergy - Plateforme d'apprentissage assistée par IA",
     version="2.0.0",
-    debug=settings.DEBUG
+    debug=settings.DEBUG,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# CORS
+# Configuration CORS (pour autoriser le frontend React)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # En production, remplacer par l'URL exacte du frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Enregistrer les routes
-app.include_router(auth.router)
+app. include_router(auth.router)
 app.include_router(session. router)
 app.include_router(tools.router)
 app.include_router(files.router)
 
+# Route de santé
 @app.get("/health")
 async def health_check():
+    """Vérifie que l'API est en ligne"""
     return {
         "status": "ok",
-        "message": "StudySynergy API v2.0",
+        "message": "StudySynergy API v2.0 is running",
         "auth": "JWT",
         "database": "Firestore",
         "storage": "Local"
     }
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG
-    )
+@app.get("/")
+async def root():
+    """Page d'accueil de l'API"""
+    return {
+        "message": "Bienvenue sur StudySynergy API",
+        "documentation": "/docs",
+        "health":  "/health"
+    }

@@ -11,7 +11,7 @@ from typing import List, Dict
 genai.configure(api_key=settings. GEMINI_API_KEY)
 
 # Modèle à utiliser (selon le cahier des charges)
-model = genai.GenerativeModel('gemini-1.5-pro')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 class GeminiService:
     """
