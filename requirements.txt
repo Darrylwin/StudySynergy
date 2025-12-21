@@ -1,7 +1,7 @@
 # FastAPI et serveur
 fastapi
 uvicorn[standard]
-python-multipart  # Pour gérer les uploads de fichiers
+python-multipart
 
 # Firebase
 firebase-admin
@@ -10,6 +10,5 @@ firebase-admin
 google-generativeai
 
 # Utilitaires
-python-dotenv     # Pour charger les variables . env
-pydantic     	  # Validation des données
-python-jose  	  # Pour décoder les tokens JWT Firebase
+python-dotenv
+pydantic

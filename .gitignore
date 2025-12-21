@@ -30,11 +30,14 @@ wheels/
 # Firebase credentials (TRÈS IMPORTANT !)
 firebase_credentials.json
 
+# Fichiers uploadés
+uploads/
+
 # IDE
 .vscode/
 . idea/
-*. swp
-*.swo
+*.swp
+*. swo
 
 # OS
 .DS_Store

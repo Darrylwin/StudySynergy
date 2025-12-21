@@ -2,8 +2,8 @@
 Point d'entrée principal de l'application FastAPI.
 """
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.routes import session, tools
+from fastapi. middleware.cors import CORSMiddleware
+from app.routes import session, tools, files  # ← Ajout de files
 from app.config import settings
 
 # Créer l'application FastAPI
@@ -25,7 +25,8 @@ app.add_middleware(
 
 # Enregistrer les routes
 app.include_router(session.router)
-app.include_router(tools. router)
+app.include_router(tools.router)
+app.include_router(files.router)  # ← Nouvelle route
 
 # Route de santé (pour vérifier que l'API fonctionne)
 @app.get("/health")
@@ -33,7 +34,8 @@ async def health_check():
     """Endpoint de santé pour vérifier que l'API est en ligne."""
     return {
         "status": "ok",
-        "message": "StudySynergy API is running"
+        "message": "StudySynergy API is running",
+        "storage":  "local"  # Indique qu'on utilise le stockage local
     }
 
 # Point d'entrée pour lancer le serveur

@@ -5,47 +5,41 @@ from pydantic import BaseModel, Field
 from typing import Literal, Optional
 from datetime import datetime
 
-
 # ===== REQUÊTES (Input) =====
 
 class CreateSessionRequest(BaseModel):
-    """Données pour créer une nouvelle session"""
-    title: str = Field(..., min_length=1, max_length=200)
-
+    """Données pour créer une nouvelle session (sans titre, généré par l'IA)"""
+    pass  # Aucun champ requis, tout est automatique !
 
 class GenerateToolRequest(BaseModel):
     """Demande de génération d'un outil (quiz, flashcards, etc.)"""
     tool_type: Literal["quiz", "flashcards", "detailed_notes"]
     focus_section: Optional[str] = None  # Section spécifique du cours (optionnel)
 
-
 class ChatRequest(BaseModel):
     """Message de chat pour discuter du cours"""
     message: str = Field(..., min_length=1)
-
 
 # ===== RÉPONSES (Output) =====
 
 class CreateSessionResponse(BaseModel):
     """Réponse après création de session"""
-    session_id: str
-
+    session_id:  str
 
 class UploadFileResponse(BaseModel):
     """Réponse après upload d'un fichier"""
     status: str = "uploaded"
     file_id: str
-
+    file_url: str  # URL pour accéder au fichier
 
 class GenerateInitialResponse(BaseModel):
-    """Réponse avec le résumé global initial"""
+    """Réponse avec le titre généré et le résumé global initial"""
+    title: str  # NOUVEAU :  Titre généré par l'IA
     summary: str
-
 
 class GenerateToolResponse(BaseModel):
     """Réponse avec le contenu généré (quiz, flashcards, etc.)"""
     content: dict  # Le JSON généré par Gemini
-
 
 class ChatResponse(BaseModel):
     """Réponse du chat"""

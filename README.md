@@ -19,8 +19,8 @@ Backend de l'application StudySynergy, plateforme d'apprentissage assistée par 
 ### 1. Cloner le projet
 
 ```bash
-git clone <url-repo>
-cd studysynergy-backend
+git clone https://github.com/Darrylwin/StudySynergy.git
+cd studysynergy
 ```
 
 ### 2. Créer un environnement virtuel

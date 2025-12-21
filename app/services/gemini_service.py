@@ -8,11 +8,10 @@ import re
 from typing import List, Dict
 
 # Configurer Gemini avec la clé API
-genai.configure(api_key=settings.GEMINI_API_KEY)
+genai.configure(api_key=settings. GEMINI_API_KEY)
 
 # Modèle à utiliser (selon le cahier des charges)
 model = genai.GenerativeModel('gemini-1.5-pro')
-
 
 class GeminiService:
     """
@@ -29,26 +28,36 @@ class GeminiService:
         return uploaded_file.uri
 
     @staticmethod
-    def generate_global_summary(gemini_files: List[Dict[str, str]]) -> str:
+    def generate_title_and_summary(gemini_files: List[Dict[str, str]]) -> tuple[str, str]:
         """
-        Génère un résumé global introductif des documents.
+        Génère un TITRE et un résumé global introductif des documents.
 
         Args:
             gemini_files: Liste de dicts avec 'file_uri' et 'mime_type'
 
         Returns:
-            Le résumé généré
+            Tuple (titre, résumé)
         """
         prompt = """
-        Tu es un assistant pédagogique expert.  Analyse ces documents de cours et génère un résumé global introductif.
-
+        Tu es un assistant pédagogique expert.  Analyse ces documents de cours. 
+        
+        Ta tâche : 
+        1. Génère un TITRE court et descriptif pour ce cours (max 60 caractères)
+        2. Génère un résumé global introductif
+        
+        FORMAT DE SORTIE (JSON UNIQUEMENT) :
+        {
+            "title": "Titre du cours",
+            "summary": "Résumé détaillé ici..."
+        }
+        
         Le résumé doit : 
         - Présenter les concepts principaux abordés
         - Être structuré et facile à lire
         - Faire environ 200-300 mots
         - Donner une vue d'ensemble pour orienter l'étudiant
-
-        Retourne uniquement le résumé, sans préambule.
+        
+        Retourne UNIQUEMENT du JSON valide, sans markdown ni commentaires.
         """
 
         # Construire le contexte avec les fichiers
@@ -56,11 +65,16 @@ class GeminiService:
                    for f in gemini_files]
 
         response = model.generate_content([*context, prompt])
-        return response.text
+
+        # Nettoyer et parser le JSON
+        clean_json = GeminiService._clean_json_response(response.text)
+        data = json.loads(clean_json)
+
+        return data['title'], data['summary']
 
     @staticmethod
     def generate_quiz(gemini_files: List[Dict[str, str]],
-                      focus_section: str = None) -> dict:
+                     focus_section: str = None) -> dict:
         """
         Génère un quiz QCM au format JSON.
         """
@@ -68,7 +82,7 @@ class GeminiService:
 
         prompt = f"""
         Tu es un assistant pédagogique.  Génère un quiz de 10 questions QCM basé sur ces documents.{focus_instruction}
-
+        
         FORMAT DE SORTIE (JSON UNIQUEMENT) :
         {{
             "questions": [
@@ -80,7 +94,7 @@ class GeminiService:
                 }}
             ]
         }}
-
+        
         RÈGLES :
         - Exactement 10 questions
         - 4 options par question
@@ -101,7 +115,7 @@ class GeminiService:
 
     @staticmethod
     def generate_flashcards(gemini_files: List[Dict[str, str]],
-                            focus_section: str = None) -> dict:
+                           focus_section: str = None) -> dict:
         """
         Génère des flashcards au format JSON.
         """
@@ -109,7 +123,7 @@ class GeminiService:
 
         prompt = f"""
         Tu es un assistant pédagogique. Génère 15 flashcards de révision basées sur ces documents.{focus_instruction}
-
+        
         FORMAT DE SORTIE (JSON UNIQUEMENT) :
         {{
             "flashcards": [
@@ -119,7 +133,7 @@ class GeminiService:
                 }}
             ]
         }}
-
+        
         RÈGLES :
         - Exactement 15 flashcards
         - Couvrir les concepts clés
@@ -132,13 +146,13 @@ class GeminiService:
                    for f in gemini_files]
 
         response = model.generate_content([*context, prompt])
-        clean_json = GeminiService._clean_json_response(response.text)
+        clean_json = GeminiService._clean_json_response(response. text)
 
         return json.loads(clean_json)
 
     @staticmethod
     def generate_detailed_notes(gemini_files: List[Dict[str, str]],
-                                focus_section: str = None) -> dict:
+                               focus_section: str = None) -> dict:
         """
         Génère des notes détaillées structurées.
         """
@@ -146,7 +160,7 @@ class GeminiService:
 
         prompt = f"""
         Tu es un assistant pédagogique. Génère des notes de cours détaillées et structurées basées sur ces documents.{focus_instruction}
-
+        
         FORMAT DE SORTIE (JSON UNIQUEMENT) :
         {{
             "sections": [
@@ -157,7 +171,7 @@ class GeminiService:
                 }}
             ]
         }}
-
+        
         RÈGLES :
         - Structurer en sections logiques
         - Utiliser du markdown dans content (listes, gras, etc.)
@@ -166,7 +180,7 @@ class GeminiService:
         - Retourne UNIQUEMENT du JSON valide
         """
 
-        context = [{"mime_type": f["mime_type"], "file_uri": f["file_uri"]}
+        context = [{"mime_type":  f["mime_type"], "file_uri": f["file_uri"]}
                    for f in gemini_files]
 
         response = model.generate_content([*context, prompt])
@@ -175,21 +189,21 @@ class GeminiService:
         return json.loads(clean_json)
 
     @staticmethod
-    def chat_about_course(gemini_files: List[Dict[str, str]],
-                          user_message: str) -> str:
+    def chat_about_course(gemini_files:  List[Dict[str, str]],
+                         user_message: str) -> str:
         """
         Répond à une question de l'étudiant sur le cours.
         """
         prompt = f"""
         Tu es un tuteur pédagogique. L'étudiant te pose une question sur le cours. 
-
+        
         IMPORTANT : Tu ne dois répondre QU'aux questions liées au contenu des documents fournis.
         Si la question est hors sujet, réponds poliment que tu ne peux traiter que les questions sur ce cours.
-
-        Question de l'étudiant :
+        
+        Question de l'étudiant : 
         {user_message}
-
-        Réponds de manière claire, pédagogique et complète. 
+        
+        Réponds de manière claire, pédagogique et complète.
         """
 
         context = [{"mime_type": f["mime_type"], "file_uri": f["file_uri"]}
@@ -210,12 +224,11 @@ class GeminiService:
             return json_match.group(1).strip()
 
         # Sinon, chercher juste entre ```
-        json_match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
+        json_match = re. search(r'```\s*(.*?)\s*```', text, re.DOTALL)
         if json_match:
             return json_match.group(1).strip()
 
         # Sinon retourner tel quel
-        return text.strip()
-
+        return text. strip()
 
 gemini_service = GeminiService()
