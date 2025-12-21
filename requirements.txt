@@ -1,0 +1,15 @@
+# FastAPI et serveur
+fastapi
+uvicorn[standard]
+python-multipart  # Pour gérer les uploads de fichiers
+
+# Firebase
+firebase-admin
+
+# Google Gemini AI
+google-generativeai
+
+# Utilitaires
+python-dotenv     # Pour charger les variables . env
+pydantic     	  # Validation des données
+python-jose  	  # Pour décoder les tokens JWT Firebase
