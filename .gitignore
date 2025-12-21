@@ -28,7 +28,7 @@ wheels/
 .venv
 
 # Firebase credentials (TRÈS IMPORTANT !)
-firebase_credentials.json
+#firebase_credentials.json
 
 # Fichiers uploadés
 uploads/
