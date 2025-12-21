@@ -1,203 +1,201 @@
 """
-Routes API pour la gestion des sessions d'apprentissage.
+Routes pour la gestion des sessions d'apprentissage.
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Request
-from fastapi.responses import FileResponse
-from app.auth import verify_firebase_token
+from typing import List
+from app.auth import get_current_user
 from app.models import (
-    CreateSessionRequest, CreateSessionResponse,
-    UploadFileResponse, GenerateInitialResponse,
+    UploadFileResponse, CreateSessionResponse,
+    SessionListResponse, SessionDetailResponse,
     ChatRequest, ChatResponse
 )
 from app.services.firebase_service import firebase_service
-from app.services.gemini_service import gemini_service
+from app.services. gemini_service import gemini_service
 from app.config import settings
-import tempfile
-import os
 import uuid
+import os
 
 router = APIRouter(prefix="/api/session", tags=["Sessions"])
 
 @router.post("/create", response_model=CreateSessionResponse)
 async def create_session(
-    request: CreateSessionRequest,
-    user:  dict = Depends(verify_firebase_token)
+    request: Request,
+    files: List[UploadFile] = File(...),
+    current_user: dict = Depends(get_current_user)
 ):
     """
-    Crée une nouvelle session d'apprentissage SANS titre (généré automatiquement par l'IA plus tard).
+    Crée une session en uploadant des fichiers.
 
-    Retourne le session_id.
+    **Flow complet:**
+    1. User uploade ses fichiers de cours (PDF, images, audio, etc.)
+    2. Fichiers sauvegardés localement
+    3. Fichiers envoyés à Gemini pour analyse
+    4. L'IA génère automatiquement le TITRE et le RÉSUMÉ
+    5. Session créée avec toutes les infos
+
+    **Pas de titre manuel, tout est automatique ! **
     """
-    user_id = user['uid']
-
-    # Créer la session dans Firestore (sans titre, il sera généré plus tard)
-    session_id = firebase_service.create_session(user_id)
-
-    return CreateSessionResponse(session_id=session_id)
-
-@router.post("/{session_id}/upload", response_model=UploadFileResponse)
-async def upload_file(
-    session_id: str,
-    request: Request,  # NOUVEAU : Pour obtenir l'URL de base
-    file: UploadFile = File(...),
-    user: dict = Depends(verify_firebase_token)
-):
-    """
-    Upload un fichier (PDF, Audio, Image) pour une session.
-
-    Processus :
-    1. Validation de la taille du fichier
-    2. Stockage local dans uploads/sessions/{session_id}/
-    3. Upload vers Gemini File API (pour analyse IA)
-    4. Sauvegarde des métadonnées dans Firestore
-
-    Retourne le file_id et l'URL pour accéder au fichier.
-    """
-    # Vérifier que la session appartient bien au user
-    session = firebase_service.get_session(session_id)
-    if not session or session['userId'] != user['uid']:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found or access denied"
-        )
-
-    # Lire le contenu du fichier
-    file_content = await file.read()
-    file_size = len(file_content)
-
-    # Validation de la taille
-    if file_size > settings.MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=status. HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File too large.  Maximum size: {settings.MAX_FILE_SIZE_MB} MB"
-        )
-
-    # Générer un ID unique pour ce fichier
-    file_id = str(uuid.uuid4())
-
-    # Obtenir l'URL de base dynamiquement depuis la requête
+    user_id = current_user['user_id']
     base_url = str(request.base_url).rstrip('/')
 
-    # 1. Sauvegarder localement
-    local_path, file_url = firebase_service.save_file_locally(
-        file_content,
-        file. filename,
-        session_id,
-        file_id,
-        base_url  # NOUVEAU : Passé dynamiquement
-    )
+    # Créer un ID de session temporaire
+    temp_session_id = str(uuid.uuid4())
 
-    # 2. Upload vers Gemini File API
+    uploaded_files = []
+    local_paths = []
+
     try:
-        gemini_uri = gemini_service.upload_file(local_path, file. content_type)
+        # 1. Upload tous les fichiers
+        for file in files:
+            # Lire le fichier
+            file_content = await file.read()
+            file_size = len(file_content)
+
+            # Validation
+            if file_size > settings.MAX_FILE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Fichier trop volumineux: {file.filename}. Max: {settings.MAX_FILE_SIZE_MB} MB"
+                )
+
+            file_id = str(uuid.uuid4())
+
+            # Sauvegarder localement
+            local_path, file_url = firebase_service.save_file_locally(
+                file_content, file.filename, temp_session_id, file_id, base_url
+            )
+
+            local_paths.append(local_path)
+
+            # Upload vers Gemini
+            gemini_uri = gemini_service.upload_file(local_path, file.content_type)
+
+            uploaded_files.append({
+                'file_id': file_id,
+                'file_name': file.filename,
+                'file_size': file_size,
+                'file_url': file_url,
+                'gemini_uri':  gemini_uri,
+                'mime_type': file.content_type
+            })
+
+        # 2. Préparer les fichiers pour Gemini
+        gemini_files = [
+            {'file_uri': f['gemini_uri'], 'mime_type': f['mime_type']}
+            for f in uploaded_files
+        ]
+
+        # 3. Générer TITRE + RÉSUMÉ avec l'IA
+        title, summary = gemini_service.generate_title_and_summary(gemini_files)
+
+        # 4. Créer la session dans Firestore avec le vrai titre
+        session_id = firebase_service.create_session(user_id, title, summary)
+
+        # 5. Renommer le dossier temporaire
+        old_dir = settings.UPLOAD_DIR / "sessions" / temp_session_id
+        new_dir = settings.UPLOAD_DIR / "sessions" / session_id
+        old_dir.rename(new_dir)
+
+        # 6. Sauvegarder les métadonnées des fichiers
+        for f in uploaded_files:
+            # Mettre à jour l'URL avec le vrai session_id
+            f['file_url'] = f['file_url'].replace(temp_session_id, session_id)
+
+            firebase_service.save_file_metadata(
+                session_id, f['file_name'], f['file_url'],
+                f['gemini_uri'], f['mime_type'], f['file_size']
+            )
+
+        return CreateSessionResponse(
+            session_id=session_id,
+            title=title,
+            summary=summary,
+            files=[
+                {
+                    'file_id':  f['file_id'],
+                    'file_name': f['file_name'],
+                    'file_size': f['file_size'],
+                    'file_url': f['file_url']
+                }
+                for f in uploaded_files
+            ]
+        )
+
     except Exception as e:
-        # Si Gemini échoue, on supprime le fichier local
-        os.unlink(local_path)
+        # En cas d'erreur, nettoyer les fichiers
+        for path in local_paths:
+            if os.path.exists(path):
+                os.unlink(path)
+
+        firebase_service.delete_session_files(temp_session_id)
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload to Gemini: {str(e)}"
+            detail=f"Erreur lors de la création de la session: {str(e)}"
         )
 
-    # 3. Sauvegarder les métadonnées dans Firestore
-    firebase_service.save_file_metadata(
-        session_id,
-        file. filename,
-        file_url,  # URL pour accéder au fichier via l'API
-        gemini_uri,
-        file. content_type,
-        file_size
-    )
+@router.get("/list", response_model=SessionListResponse)
+async def list_sessions(current_user: dict = Depends(get_current_user)):
+    """
+    Liste toutes les sessions de l'utilisateur connecté.
+    """
+    sessions = firebase_service.get_user_sessions(current_user['user_id'])
 
-    return UploadFileResponse(file_id=file_id, file_url=file_url)
+    return SessionListResponse(sessions=sessions)
 
-@router.post("/{session_id}/generate-initial", response_model=GenerateInitialResponse)
-async def generate_initial_summary(
-    session_id: str,
-    user: dict = Depends(verify_firebase_token)
+@router.get("/{session_id}", response_model=SessionDetailResponse)
+async def get_session_detail(
+    session_id:  str,
+    current_user:  dict = Depends(get_current_user)
 ):
     """
-    Génère le TITRE et le résumé global introductif de la session.
-
-    L'IA analyse les documents et :
-    1. Génère un titre descriptif automatiquement
-    2. Génère un résumé global
-    3. Met à jour la session dans Firestore
-    4. Change le status à "ready"
-
-    Appelé automatiquement par le frontend quand tous les uploads sont finis.
+    Récupère les détails d'une session.
     """
-    # Vérifier l'accès
     session = firebase_service.get_session(session_id)
-    if not session or session['userId'] != user['uid']:
+
+    if not session or session['userId'] != current_user['user_id']:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found or access denied"
+            status_code=status. HTTP_404_NOT_FOUND,
+            detail="Session non trouvée"
         )
 
-    # Récupérer tous les fichiers
     files = firebase_service.get_session_files(session_id)
 
-    if not files:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No files uploaded yet"
-        )
-
-    # Préparer les fichiers pour Gemini
-    gemini_files = [
-        {
-            "file_uri": f['geminiUri'],
-            "mime_type": f['mimeType']
-        }
-        for f in files
-    ]
-
-    # Générer le TITRE et le RÉSUMÉ avec l'IA
-    title, summary = gemini_service.generate_title_and_summary(gemini_files)
-
-    # Sauvegarder dans Firestore
-    firebase_service.update_session(session_id, {
-        'title': title,  # NOUVEAU : Titre généré par l'IA
-        'globalSummary': summary,
-        'status': 'ready'
-    })
-
-    return GenerateInitialResponse(title=title, summary=summary)
+    return SessionDetailResponse(
+        session_id=session_id,
+        title=session['title'],
+        summary=session['summary'],
+        status=session['status'],
+        created_at=str(session.get('createdAt', '')),
+        files=files
+    )
 
 @router.post("/{session_id}/chat", response_model=ChatResponse)
 async def chat_about_course(
     session_id: str,
     request: ChatRequest,
-    user: dict = Depends(verify_firebase_token)
+    current_user: dict = Depends(get_current_user)
 ):
     """
-    Permet de discuter avec l'IA à propos du cours.
+    Discuter avec l'IA à propos du cours.
 
-    L'IA ne répond QU'aux questions liées au contenu des fichiers uploadés.
+    L'IA répond uniquement aux questions liées au contenu des fichiers.
     """
-    # Vérifier l'accès
-    session = firebase_service. get_session(session_id)
-    if not session or session['userId'] != user['uid']:
+    session = firebase_service.get_session(session_id)
+
+    if not session or session['userId'] != current_user['user_id']:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found or access denied"
+            detail="Session non trouvée"
         )
 
-    # Récupérer les fichiers
     files = firebase_service.get_session_files(session_id)
 
-    if not files:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No files uploaded yet"
-        )
-
     gemini_files = [
-        {"file_uri": f['geminiUri'], "mime_type": f['mimeType']}
+        {'file_uri': f['geminiUri'], 'mime_type':  f['mimeType']}
         for f in files
     ]
 
-    # Appeler Gemini
     response_text = gemini_service.chat_about_course(gemini_files, request.message)
 
     return ChatResponse(response=response_text)

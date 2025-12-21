@@ -1,52 +1,44 @@
 """
-Middleware d'authentification Firebase.
+Middleware d'authentification JWT.
 """
 from fastapi import Header, HTTPException, status
-from app.services.firebase_service import firebase_service
+from app.services.auth_service import auth_service
 from typing import Optional
 
-
-async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> dict:
+async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     """
-    Dépendance FastAPI qui vérifie le token Firebase.
+    Dépendance FastAPI qui vérifie le token JWT et retourne l'utilisateur.
 
-    Utilisation dans une route :
+    Usage dans une route:
     @app.get("/protected")
-    async def protected_route(user: dict = Depends(verify_firebase_token)):
-        # user contient {'uid':  '... ', 'email': '...', etc.}
+    async def protected(user: dict = Depends(get_current_user)):
+        # user contient {"user_id": ".. .", "email": "..."}
         ...
-
-    Args:
-        authorization: Header HTTP "Authorization:  Bearer <TOKEN>"
-
-    Returns:
-        Les données du user décodées depuis le token
-
-    Raises:
-        HTTPException 401 si le token est invalide ou absent
     """
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing Authorization header"
+            detail="Authorization header manquant",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Format attendu : "Bearer <TOKEN>"
+    # Format attendu: "Bearer <TOKEN>"
     parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
+    if len(parts) != 2 or parts[0]. lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authorization header format.  Expected: Bearer <token>"
+            detail="Format du header Authorization invalide.  Attendu: Bearer <token>",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     token = parts[1]
 
     try:
-        # Vérifier le token avec Firebase
-        user_data = firebase_service.verify_token(token)
-        return user_data
+        payload = auth_service.decode_token(token)
+        return payload  # Contient user_id, email, etc.
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token:  {str(e)}"
+            detail="Token invalide ou expiré",
+            headers={"WWW-Authenticate": "Bearer"},
         )

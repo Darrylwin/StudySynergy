@@ -3,12 +3,18 @@ fastapi
 uvicorn[standard]
 python-multipart
 
-# Firebase
+# Firebase (uniquement Firestore)
 firebase-admin
 
 # Google Gemini AI
 google-generativeai
 
+# JWT et sécurité
+python-jose[cryptography]
+passlib[bcrypt]
+
 # Utilitaires
 python-dotenv
 pydantic
+pydantic-settings
+python-dateutil

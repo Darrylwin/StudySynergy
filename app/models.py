@@ -1,45 +1,86 @@
 """
-Modèles Pydantic pour valider les données des requêtes/réponses.
+Modèles Pydantic pour valider les données.
 """
-from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Literal, Optional, List
 from datetime import datetime
 
-# ===== REQUÊTES (Input) =====
+# ===== AUTH =====
 
-class CreateSessionRequest(BaseModel):
-    """Données pour créer une nouvelle session (sans titre, généré par l'IA)"""
-    pass  # Aucun champ requis, tout est automatique !
+class RegisterRequest(BaseModel):
+    """Inscription d'un nouvel utilisateur"""
+    email:  EmailStr
+    password: str = Field(..., min_length=8)
+    name: str = Field(..., min_length=2, max_length=100)
 
-class GenerateToolRequest(BaseModel):
-    """Demande de génération d'un outil (quiz, flashcards, etc.)"""
-    tool_type: Literal["quiz", "flashcards", "detailed_notes"]
-    focus_section: Optional[str] = None  # Section spécifique du cours (optionnel)
+class LoginRequest(BaseModel):
+    """Connexion"""
+    email: EmailStr
+    password: str
 
-class ChatRequest(BaseModel):
-    """Message de chat pour discuter du cours"""
-    message: str = Field(..., min_length=1)
+class ChangePasswordRequest(BaseModel):
+    """Changement de mot de passe"""
+    old_password: str
+    new_password: str = Field(..., min_length=8)
 
-# ===== RÉPONSES (Output) =====
+class AuthResponse(BaseModel):
+    """Réponse après connexion/inscription"""
+    access_token:  str
+    token_type: str = "bearer"
+    user: dict
 
-class CreateSessionResponse(BaseModel):
-    """Réponse après création de session"""
-    session_id:  str
+class UserResponse(BaseModel):
+    """Informations utilisateur"""
+    user_id: str
+    email:  str
+    name: str
+    created_at: str
+
+# ===== SESSIONS =====
 
 class UploadFileResponse(BaseModel):
     """Réponse après upload d'un fichier"""
-    status: str = "uploaded"
     file_id: str
-    file_url: str  # URL pour accéder au fichier
+    file_name: str
+    file_size: int
+    file_url: str
 
-class GenerateInitialResponse(BaseModel):
-    """Réponse avec le titre généré et le résumé global initial"""
-    title: str  # NOUVEAU :  Titre généré par l'IA
+class CreateSessionResponse(BaseModel):
+    """Réponse après création de session (avec titre et résumé générés par l'IA)"""
+    session_id: str
+    title: str
     summary: str
+    files: List[dict]
+
+class SessionListResponse(BaseModel):
+    """Liste des sessions de l'utilisateur"""
+    sessions: List[dict]
+
+class SessionDetailResponse(BaseModel):
+    """Détails d'une session"""
+    session_id: str
+    title:  str
+    summary: str
+    status: str
+    created_at:  str
+    files: List[dict]
+
+# ===== TOOLS =====
+
+class GenerateToolRequest(BaseModel):
+    """Demande de génération d'un outil"""
+    tool_type: Literal["quiz", "flashcards", "detailed_notes"]
+    focus_section: Optional[str] = None
 
 class GenerateToolResponse(BaseModel):
-    """Réponse avec le contenu généré (quiz, flashcards, etc.)"""
-    content: dict  # Le JSON généré par Gemini
+    """Réponse avec le contenu généré"""
+    content: dict
+
+# ===== CHAT =====
+
+class ChatRequest(BaseModel):
+    """Message de chat"""
+    message: str = Field(..., min_length=1)
 
 class ChatResponse(BaseModel):
     """Réponse du chat"""

@@ -1,89 +1,121 @@
 """
-Service pour interagir avec Firebase (Firestore uniquement).
-Le stockage des fichiers est géré localement.
+Service pour interagir avec Firestore uniquement.
 """
 import firebase_admin
-from firebase_admin import credentials, firestore, auth
+from firebase_admin import credentials, firestore
 from app.config import settings
-from datetime import datetime
 from typing import Optional, List, Dict
 import uuid
 import shutil
 from pathlib import Path
 
-# Initialiser Firebase Admin SDK (une seule fois)
+# Initialiser Firebase Admin SDK
 cred = credentials.Certificate(settings. FIREBASE_CREDENTIALS_PATH)
 firebase_admin.initialize_app(cred)
 
-# Client Firestore global
+# Client Firestore
 db = firestore.client()
 
 class FirebaseService:
     """
-    Service centralisé pour Firebase (Firestore + Auth uniquement).
+    Service centralisé pour Firestore.
     """
 
-    @staticmethod
-    def verify_token(token: str) -> dict:
-        """
-        Vérifie le token Firebase du user et retourne les infos.
-        Lève une exception si invalide.
-        """
-        try:
-            decoded_token = auth.verify_id_token(token)
-            return decoded_token  # Contient 'uid', 'email', etc.
-        except Exception as e:
-            raise ValueError(f"Token invalide: {str(e)}")
+    # ===== USERS =====
 
     @staticmethod
-    def create_session(user_id: str) -> str:
-        """
-        Crée une nouvelle session dans Firestore SANS titre (généré plus tard par l'IA).
-        Retourne le session_id.
-        """
+    def create_user(email: str, hashed_password: str, name:  str) -> str:
+        """Crée un utilisateur dans Firestore"""
+        user_ref = db.collection('users').document()
+        user_id = user_ref.id
+
+        user_ref.set({
+            'email': email,
+            'password':  hashed_password,
+            'name': name,
+            'createdAt': firestore.SERVER_TIMESTAMP
+        })
+
+        return user_id
+
+    @staticmethod
+    def get_user_by_email(email: str) -> Optional[dict]:
+        """Récupère un utilisateur par email"""
+        users = db.collection('users').where('email', '==', email).limit(1).stream()
+
+        for user in users:
+            return {'user_id': user.id, **user.to_dict()}
+        return None
+
+    @staticmethod
+    def get_user_by_id(user_id:  str) -> Optional[dict]:
+        """Récupère un utilisateur par ID"""
+        doc = db.collection('users').document(user_id).get()
+        if doc.exists:
+            return {'user_id': doc.id, **doc.to_dict()}
+        return None
+
+    @staticmethod
+    def update_user_password(user_id: str, new_hashed_password: str):
+        """Met à jour le mot de passe d'un utilisateur"""
+        db.collection('users').document(user_id).update({'password': new_hashed_password})
+
+    # ===== SESSIONS =====
+
+    @staticmethod
+    def create_session(user_id: str, title: str, summary: str) -> str:
+        """Crée une session avec titre et résumé générés par l'IA"""
         session_ref = db.collection('sessions').document()
         session_id = session_ref.id
 
-        session_ref.set({
+        session_ref. set({
             'userId': user_id,
-            'title': 'Session en cours de création.. .',  # Titre temporaire
+            'title': title,
+            'summary': summary,
             'createdAt': firestore.SERVER_TIMESTAMP,
-            'status': 'processing',
-            'globalSummary': ''
+            'status': 'ready'
         })
 
         return session_id
 
     @staticmethod
     def get_session(session_id: str) -> Optional[dict]:
-        """Récupère une session par son ID"""
+        """Récupère une session par ID"""
         doc = db.collection('sessions').document(session_id).get()
         if doc.exists:
             return doc.to_dict()
         return None
 
     @staticmethod
+    def get_user_sessions(user_id: str) -> List[dict]:
+        """Récupère toutes les sessions d'un utilisateur"""
+        sessions = db.collection('sessions')\
+            .where('userId', '==', user_id)\
+            .order_by('createdAt', direction=firestore.Query.DESCENDING)\
+            .stream()
+
+        return [{'session_id': s.id, **s.to_dict()} for s in sessions]
+
+    @staticmethod
     def update_session(session_id: str, data: dict):
         """Met à jour une session"""
         db.collection('sessions').document(session_id).update(data)
 
+    # ===== FILES =====
+
     @staticmethod
-    def save_file_metadata(session_id: str, file_name: str,
-                          file_url: str, gemini_uri: str,
-                          mime_type: str, file_size: int) -> str:
-        """
-        Sauvegarde les métadonnées d'un fichier uploadé.
-        Retourne le file_id.
-        """
+    def save_file_metadata(session_id: str, file_name: str, file_url: str,
+                          gemini_uri: str, mime_type: str, file_size: int) -> str:
+        """Sauvegarde les métadonnées d'un fichier"""
         file_ref = db.collection('sessions').document(session_id)\
                      .collection('files').document()
         file_id = file_ref.id
 
         file_ref.set({
             'fileName': file_name,
-            'fileUrl': file_url,  # URL pour accéder au fichier via l'API
+            'fileUrl': file_url,
             'geminiUri': gemini_uri,
-            'mimeType': mime_type,
+            'mimeType':  mime_type,
             'fileSize': file_size,
             'uploadedAt': firestore.SERVER_TIMESTAMP
         })
@@ -92,26 +124,18 @@ class FirebaseService:
 
     @staticmethod
     def get_session_files(session_id: str) -> List[dict]:
-        """
-        Récupère tous les fichiers d'une session.
-        """
-        files_ref = db.collection('sessions').document(session_id)\
-                      .collection('files').stream()
+        """Récupère tous les fichiers d'une session"""
+        files = db.collection('sessions').document(session_id)\
+                  .collection('files').stream()
 
-        return [
-            {
-                'fileId': f.id,
-                **f.to_dict()
-            }
-            for f in files_ref
-        ]
+        return [{'file_id': f.id, **f.to_dict()} for f in files]
+
+    # ===== ARTIFACTS =====
 
     @staticmethod
     def save_artifact(session_id: str, tool_type: str, content: dict):
-        """
-        Sauvegarde un artefact généré (quiz, flashcards, etc.).
-        """
-        artifact_ref = db.collection('sessions').document(session_id)\
+        """Sauvegarde un artefact généré"""
+        artifact_ref = db. collection('sessions').document(session_id)\
                          .collection('artifacts').document(tool_type)
 
         artifact_ref.set({
@@ -121,55 +145,36 @@ class FirebaseService:
 
     @staticmethod
     def get_artifact(session_id: str, tool_type: str) -> Optional[dict]:
-        """
-        Récupère un artefact s'il existe déjà.
-        """
+        """Récupère un artefact s'il existe"""
         doc = db.collection('sessions').document(session_id)\
-                . collection('artifacts').document(tool_type).get()
+                .collection('artifacts').document(tool_type).get()
 
         if doc.exists:
             return doc.to_dict().get('content')
         return None
 
+    # ===== STOCKAGE LOCAL =====
+
     @staticmethod
     def save_file_locally(file_content: bytes, file_name: str,
                          session_id: str, file_id: str, base_url: str) -> tuple[str, str]:
-        """
-        Sauvegarde un fichier localement dans uploads/sessions/{session_id}/
-
-        Args:
-            file_content:  Contenu binaire du fichier
-            file_name: Nom original du fichier
-            session_id: ID de la session
-            file_id: ID unique du fichier
-            base_url: URL de base de la requête (ex: http://localhost:8000)
-
-        Returns:
-            Tuple (chemin_fichier_local, url_api)
-        """
-        # Créer le dossier de la session
+        """Sauvegarde un fichier localement"""
         session_dir = settings.UPLOAD_DIR / "sessions" / session_id
         session_dir.mkdir(parents=True, exist_ok=True)
 
-        # Construire le nom de fichier :  {file_id}_{nom_original}
         safe_filename = f"{file_id}_{file_name}"
         file_path = session_dir / safe_filename
 
-        # Sauvegarder le fichier
         with open(file_path, 'wb') as f:
-            f.write(file_content)
+            f. write(file_content)
 
-        # Construire l'URL pour accéder au fichier via l'API (dynamique)
         file_url = f"{base_url}/api/files/{session_id}/{safe_filename}"
 
         return str(file_path), file_url
 
     @staticmethod
     def get_file_path(session_id: str, filename: str) -> Optional[Path]:
-        """
-        Récupère le chemin complet d'un fichier.
-        Retourne None si le fichier n'existe pas.
-        """
+        """Récupère le chemin d'un fichier"""
         file_path = settings.UPLOAD_DIR / "sessions" / session_id / filename
 
         if file_path.exists() and file_path.is_file():
@@ -178,9 +183,7 @@ class FirebaseService:
 
     @staticmethod
     def delete_session_files(session_id: str):
-        """
-        Supprime tous les fichiers d'une session (pour nettoyage).
-        """
+        """Supprime tous les fichiers d'une session"""
         session_dir = settings.UPLOAD_DIR / "sessions" / session_id
         if session_dir.exists():
             shutil.rmtree(session_dir)
