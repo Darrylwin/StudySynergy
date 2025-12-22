@@ -28,32 +28,48 @@ class CloudinaryService:
         try:
             file_buffer = io.BytesIO(file_content)
 
-            # Simple solution : utiliser uniquement le nom de fichier original
-            # Cloudinary gérera automatiquement les caractères spéciaux
-            result = cloudinary.uploader.upload(
-                file_buffer,
-                folder=f"studysynergy/sessions/{session_id}",
-                resource_type="auto",
-                # Ne pas spécifier public_id explicitement
-                # Laisser Cloudinary gérer le nom
-                use_filename=False,  # Important : ne pas utiliser le nom de fichier comme base
-                unique_filename=True,  # Générer un nom unique
-                overwrite=False
-            )
+            # Déterminer le resource_type basé sur l'extension
+            file_ext = file_name.lower().split('.')[-1] if '.' in file_name else ''
+
+            # Types qui doivent être traités comme 'raw' (non-images)
+            raw_types = {'pdf', 'doc', 'docx', 'txt', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar'}
+
+            if file_ext in raw_types:
+                resource_type = "raw"
+                # Pour les fichiers raw, il faut spécifier le filename avec extension
+                result = cloudinary.uploader.upload(
+                    file_buffer,
+                    folder=f"studysynergy/sessions/{session_id}",
+                    resource_type=resource_type,
+                    use_filename=True,  # IMPORTANT: pour conserver le nom
+                    unique_filename=True,
+                    overwrite=False,
+                    filename_override=file_name  # Force l'utilisation du nom de fichier
+                )
+            else:
+                resource_type = "auto"
+                result = cloudinary.uploader.upload(
+                    file_buffer,
+                    folder=f"studysynergy/sessions/{session_id}",
+                    resource_type=resource_type,
+                    use_filename=False,
+                    unique_filename=True,
+                    overwrite=False
+                )
+
+            print(f"DEBUG - Upload successful: {result['public_id']}")
 
             return {
                 "url": result["secure_url"],
                 "public_id": result["public_id"],
                 "format": result.get("format", ""),
-                "resource_type": result.get("resource_type", "")
+                "resource_type": result["resource_type"]
             }
 
         except Exception as e:
-            # Ajouter plus d'informations pour debug
-            print(f"Upload error details:")
-            print(f"  File name: {file_name}")
-            print(f"  Session ID: {session_id}")
-            print(f"  Error: {str(e)}")
+            print(f"DEBUG - Full error: {e}")
+            import traceback
+            traceback.print_exc()
             raise Exception(f"Erreur lors de l'upload vers Cloudinary: {str(e)}")
 
     @staticmethod

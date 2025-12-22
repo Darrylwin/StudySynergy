@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-. Python
+.Python
 env/
 venv/
 ENV/
@@ -30,14 +30,11 @@ wheels/
 # Firebase credentials (TRÈS IMPORTANT !)
 firebase_credentials.json
 
-# Fichiers uploadés
-uploads/
-
 # IDE
 .vscode/
-. idea/
+.idea/
 *.swp
-*. swo
+*.swo
 
 # OS
 .DS_Store
@@ -49,3 +46,7 @@ Thumbs.db
 # Fichiers temporaires
 tmp/
 temp/
+
+# Note: Le dossier uploads/ n'est plus nécessaire avec Cloudinary
+# mais on le garde au cas où pour les tests locaux
+uploads/
