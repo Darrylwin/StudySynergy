@@ -13,6 +13,9 @@ google-generativeai
 python-jose[cryptography]
 bcrypt
 
+# Cloudinary pour le stockage de fichiers
+cloudinary
+
 # Utilitaires
 python-dotenv
 pydantic
