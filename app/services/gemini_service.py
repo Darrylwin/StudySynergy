@@ -262,16 +262,23 @@ class GeminiService:
         """
         Nettoie la réponse Gemini pour extraire le JSON pur.
         """
-        # Enlever les balises markdown
-        json_match = re.search(r'```json\s*(.*? )\s*```', text, re.DOTALL)
+        # Enlever les balises markdown avec ```json
+        json_match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
         if json_match:
             return json_match.group(1).strip()
 
+        # Enlever les balises markdown simples ```
         json_match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
         if json_match:
             return json_match.group(1).strip()
 
-        return text.strip()
+        # Si pas de markdown, nettoyer quand même
+        # Supprimer "json" au début si présent
+        cleaned = text.strip()
+        if cleaned.lower().startswith('json'):
+            cleaned = cleaned[4:].strip()
+
+        return cleaned
 
     @staticmethod
     def _try_fix_json(json_str: str) -> str:
