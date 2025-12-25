@@ -1,0 +1,427 @@
+openapi: 3.0.3
+info:
+  title: API StudyHelper
+  version: 1.0.0
+  description: Contrat d'API pour le frontend StudyHelper — gestion des sessions, uploads, génération et chat.
+servers:
+  - url: https://api.example.com
+    description: API de production
+  - url: http://localhost:8000
+    description: Développement local
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+      example:
+        error: "Session non trouvée"
+        code: "NOT_FOUND"
+    File:
+      type: object
+      properties:
+        fileId:
+          type: string
+        name:
+          type: string
+        size:
+          type: integer
+        mimeType:
+          type: string
+        url:
+          type: string
+      required: [fileId, name]
+      example:
+        fileId: "f_abc123"
+        name: "chap1.pdf"
+        size: 123456
+        mimeType: "application/pdf"
+        url: "https://storage.example.com/files/f_abc123.pdf"
+    QuizItem:
+      type: object
+      properties:
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctIndex:
+          type: integer
+      example:
+        question: "Quelle est la capitale de la France ?"
+        options: ["Paris","Lyon","Marseille"]
+        correctIndex: 0
+    Flashcard:
+      type: object
+      properties:
+        front:
+          type: string
+        back:
+          type: string
+      example:
+        front: "ATP"
+        back: "Adénosine triphosphate"
+    ChatMessage:
+      type: object
+      properties:
+        from:
+          type: string
+          enum: [user, assistant]
+        text:
+          type: string
+        meta:
+          type: object
+      example:
+        from: assistant
+        text: "Voici un résumé bref..."
+        meta: { model: "gemini-1.5-pro", latencyMs: 123 }
+    Artifacts:
+      type: object
+      properties:
+        summary:
+          type: string
+        quiz:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuizItem'
+        flashcards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flashcard'
+      example:
+        summary: "Résumé global du contenu..."
+        quiz: [{ question: "Q?", options: ["A","B"], correctIndex: 0 }]
+        flashcards: [{ front: "Term", back: "Def" }]
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, processing, ready, error]
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+        artifacts:
+          $ref: '#/components/schemas/Artifacts'
+        chat:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+      example:
+        id: "abc123"
+        title: "Cours de biologie"
+        createdAt: "2025-12-21T12:34:56.000Z"
+        status: ready
+        files:
+          - fileId: "f1"
+            name: "chap1.pdf"
+            mimeType: "application/pdf"
+            url: "https://.../files/f1.pdf"
+        artifacts:
+          summary: "Texte du résumé..."
+        chat:
+          - from: user
+            text: "Explique la mitose"
+
+paths:
+  /api/session/create:
+    post:
+      summary: Create a new session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+              required: [title]
+            example:
+              title: "Nouvelle session"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  session:
+                    $ref: '#/components/schemas/Session'
+              example:
+                sessionId: "abc123"
+                session: { id: "abc123", title: "Nouvelle session" }
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/session:
+    get:
+      summary: List sessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+  /api/session/{sessionId}:
+    get:
+      summary: Get a session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: '#/components/schemas/Session'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                example:
+                  success: true
+  /api/session/{sessionId}/upload:
+    post:
+      summary: Upload a file to a session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded (immediate ack)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fileId:
+                    type: string
+                  file:
+                    $ref: '#/components/schemas/File'
+              example:
+                fileId: "f1"
+                file:
+                  fileId: "f1"
+                  name: "chap1.pdf"
+        '202':
+          description: Accepted; processing async
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  message:
+                    type: string
+              example:
+                jobId: "job-123"
+                message: "Upload accepted, processing started"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/session/{sessionId}/generate-initial:
+    post:
+      summary: Trigger initial multimodal analysis and summary
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Generation started (async)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  message:
+                    type: string
+              example:
+                jobId: "job-gen-1"
+                message: "Generation started"
+        '200':
+          description: Synchronous success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  session:
+                    $ref: '#/components/schemas/Session'
+              example:
+                success: true
+  /api/session/{sessionId}/generate-tool:
+    post:
+      summary: Generate a specific tool for the session (quiz, flashcards...)
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                toolType:
+                  type: string
+                  enum: [quiz, flashcards, summary, detailed_notes]
+            example:
+              toolType: quiz
+      responses:
+        '202':
+          description: Generation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  message:
+                    type: string
+              example:
+                jobId: "job-tool-1"
+                message: "Tool generation started"
+        '200':
+          description: If synchronous
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  artifact:
+                    type: object
+              example:
+                success: true
+                artifact: { quiz: [{ question: "Q?", options:["A"], correctIndex:0 }] }
+  /api/session/{sessionId}/chat:
+    post:
+      summary: Send a chat message and receive assistant reply
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+            example:
+              message: "Explique la théorie X"
+      responses:
+        '200':
+          description: Assistant reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    $ref: '#/components/schemas/ChatMessage'
+              example:
+                reply:
+                  from: assistant
+                  text: "Voici une explication..."
+                  meta: { model: "gemini-1.5-pro" }
+
+tags:
+  - name: session
+    description: Session management and generation
+security:
+  - bearerAuth: []
