@@ -142,6 +142,6 @@ Authorization: Bearer <JWT_TOKEN>
 - `POST /api/session/{id}/generate-tool` - Générer un quiz, flashcards ou notes
 - `GET /api/session/{id}/artifacts` - Récupérer tous les artefacts générés
 
-## 📄 Licence
+## Licence
 
 Projet pour le TechSprint Hackathon 2025
