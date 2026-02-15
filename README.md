@@ -2,7 +2,7 @@
 
 Backend de l'application StudySynergy, plateforme d'apprentissage assistée par IA pour le TechSprint Hackathon 2025.
 
-## 🚀 Technologies
+## Technologies
 
 - **FastAPI** : Framework web Python moderne et rapide
 - **Firebase Firestore** : Base de données NoSQL
@@ -10,14 +10,14 @@ Backend de l'application StudySynergy, plateforme d'apprentissage assistée par 
 - **Google gemini-2.5-flash** : Moteur d'IA pour l'analyse de documents et la génération de contenu
 - **JWT** : Authentification sécurisée
 
-## 📋 Prérequis
+## Prérequis
 
 - Python 3.9+
 - Compte Firebase avec projet configuré
 - Compte Cloudinary
 - Clé API Google Gemini
 
-## 🔧 Installation
+## Installation
 
 ### 1. Cloner le projet
 
@@ -98,7 +98,7 @@ DEBUG=True
 - `votre_cle_api_ici` par votre clé API Gemini
 - `JWT_SECRET_KEY` par une clé secrète aléatoire forte
 
-## 🏃 Lancement
+## Lancement
 
 ```bash
 python run.py
@@ -114,7 +114,7 @@ L'API sera accessible sur : http://localhost:8000
 
 Documentation interactive : http://localhost:8000/docs
 
-## 📚 Endpoints
+## Endpoints
 
 ### Authentification
 
@@ -141,128 +141,6 @@ Authorization: Bearer <JWT_TOKEN>
 
 - `POST /api/session/{id}/generate-tool` - Générer un quiz, flashcards ou notes
 - `GET /api/session/{id}/artifacts` - Récupérer tous les artefacts générés
-
-## 🏗️ Structure du projet
-
-```
-app/
-├── main.py              # Point d'entrée FastAPI
-├── config.py            # Configuration (Firebase, Cloudinary, Gemini)
-├── models.py            # Modèles Pydantic
-├── auth.py              # Middleware d'authentification
-├── routes/
-│   ├── auth.py          # Routes d'authentification
-│   ├── session.py       # Routes des sessions
-│   └── tools.py         # Routes des outils pédagogiques
-├── services/
-│   ├── auth_service.py       # Service JWT et bcrypt
-│   ├── firebase_service.py   # Service Firestore
-│   ├── cloudinary_service.py # Service Cloudinary
-│   └── gemini_service.py     # Service Gemini
-└── utils/
-    └── helpers.py       # Fonctions utilitaires
-```
-
-## 🧪 Tests
-
-Pour tester l'API, utiliser l'interface Swagger automatique : 
-http://localhost:8000/docs
-
-Ou avec curl : 
-
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# Inscription
-curl -X POST http://localhost:8000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123",
-    "name": "Test User"
-  }'
-
-# Connexion
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-```
-
-## 📝 Notes importantes
-
-### Sécurité
-- **Ne jamais commit** `firebase_credentials.json` ou `.env`
-- Utiliser des clés JWT fortes et uniques
-- En production, restreindre `allow_origins` dans `main.py`
-
-### Cloudinary
-- Les fichiers sont organisés dans des dossiers par session
-- Structure: `studysynergy/sessions/{session_id}/`
-- Suppression automatique des fichiers lors de la suppression d'une session
-
-### Coûts
-- Cloudinary : Plan gratuit avec 25 crédits/mois
-- Gemini API : Quota gratuit limité
-- Firebase Firestore : Quota gratuit généreux
-
-## 🐛 Troubleshooting
-
-### Erreur "Invalid token"
-- Vérifier que le token JWT est valide
-- Vérifier que `JWT_SECRET_KEY` est correct dans `.env`
-
-### Erreur Cloudinary
-- Vérifier les credentials dans `.env`
-- Vérifier les quotas sur le Dashboard Cloudinary
-
-### Erreur Gemini
-- Vérifier la clé API dans `.env`
-- Vérifier les quotas sur Google AI Studio
-
-### Erreur Firebase
-- Vérifier que `firebase_credentials.json` est correct
-- Vérifier que Firestore est activé dans Firebase Console
-
-## 🚀 Déploiement
-
-### Variables d'environnement en production
-
-Assurez-vous de définir toutes les variables d'environnement :
-- `FIREBASE_CREDENTIALS_PATH` ou `FIREBASE_CREDENTIALS_BASE64`
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
-- `GEMINI_API_KEY`
-- `JWT_SECRET_KEY`
-- `DEBUG=False`
-
-### CORS en production
-
-Dans `app/main.py`, remplacer :
-```python
-allow_origins=["*"]
-```
-par :
-```python
-allow_origins=["https://votre-frontend.com"]
-```
-
-## 📄 Changelog
-
-### v2.1.0 (Migration Cloudinary)
-- ✅ Migration du stockage local vers Cloudinary
-- ✅ Suppression automatique des fichiers lors de la suppression de session
-- ✅ Support de tous les types de fichiers (images, PDFs, audio, vidéos)
-- ✅ URLs publiques directes pour les fichiers
-
-### v2.0.0
-- Authentification JWT
-- Base de données Firestore
-- Génération de titre et résumé automatique
-- Chat avec l'IA
-- Génération d'outils pédagogiques
 
 ## 📄 Licence
 
