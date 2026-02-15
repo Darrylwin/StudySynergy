@@ -2,6 +2,7 @@
 Routes pour la gestion des sessions d'apprentissage.
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi.responses import RedirectResponse
 from typing import List
 from app.auth import get_current_user
 from app.models import (
@@ -338,3 +339,55 @@ async def chat_about_course(
     response_text = gemini_service.chat_about_course(gemini_files, request.message)
 
     return ChatResponse(response=response_text)
+
+# accès aux fichiers
+
+@router.get("/{session_id}/files/{file_id}/url")
+async def get_file_url(
+        session_id: str,
+        file_id: str,
+        current_user: dict = Depends(get_current_user)
+):
+    """
+    Retourne l'URL Cloudinary d'un fichier par son file_id.
+    """
+    session = firebase_service.get_session(session_id)
+
+    if not session or session['userId'] != current_user['user_id']:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session non trouvée")
+
+    files = firebase_service.get_session_files(session_id)
+    file = next((f for f in files if f['file_id'] == file_id), None)
+
+    if not file:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier non trouvé")
+
+    return {
+        "file_url": file['fileUrl'],
+        "file_name": file['fileName'],
+        "mime_type": file['mimeType'],
+        "file_size": file['fileSize']
+    }
+
+
+@router.get("/{session_id}/files/{file_id}/download")
+async def download_file(
+        session_id: str,
+        file_id: str,
+        current_user: dict = Depends(get_current_user)
+):
+    """
+    Redirige vers l'URL Cloudinary du fichier (téléchargement direct).
+    """
+    session = firebase_service.get_session(session_id)
+
+    if not session or session['userId'] != current_user['user_id']:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session non trouvée")
+
+    files = firebase_service.get_session_files(session_id)
+    file = next((f for f in files if f['file_id'] == file_id), None)
+
+    if not file:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier non trouvé")
+
+    return RedirectResponse(url=file['fileUrl'])
