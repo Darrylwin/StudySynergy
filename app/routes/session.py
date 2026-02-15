@@ -342,52 +342,52 @@ async def chat_about_course(
 
 # accès aux fichiers
 
-@router.get("/{session_id}/files/{file_id}/url")
-async def get_file_url(
-        session_id: str,
-        file_id: str,
-        current_user: dict = Depends(get_current_user)
-):
-    """
-    Retourne l'URL Cloudinary d'un fichier par son file_id.
-    """
-    session = firebase_service.get_session(session_id)
+# @router.get("/{session_id}/files/{file_id}/url")
+# async def get_file_url(
+#         session_id: str,
+#         file_id: str,
+#         current_user: dict = Depends(get_current_user)
+# ):
+#     """
+#     Retourne l'URL Cloudinary d'un fichier par son file_id.
+#     """
+#     session = firebase_service.get_session(session_id)
 
-    if not session or session['userId'] != current_user['user_id']:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session non trouvée")
+#     if not session or session['userId'] != current_user['user_id']:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session non trouvée")
 
-    files = firebase_service.get_session_files(session_id)
-    file = next((f for f in files if f['file_id'] == file_id), None)
+#     files = firebase_service.get_session_files(session_id)
+#     file = next((f for f in files if f['file_id'] == file_id), None)
 
-    if not file:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier non trouvé")
+#     if not file:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier non trouvé")
 
-    return {
-        "file_url": file['fileUrl'],
-        "file_name": file['fileName'],
-        "mime_type": file['mimeType'],
-        "file_size": file['fileSize']
-    }
+#     return {
+#         "file_url": file['fileUrl'],
+#         "file_name": file['fileName'],
+#         "mime_type": file['mimeType'],
+#         "file_size": file['fileSize']
+#     }
 
 
-@router.get("/{session_id}/files/{file_id}/download")
-async def download_file(
-        session_id: str,
-        file_id: str,
-        current_user: dict = Depends(get_current_user)
-):
-    """
-    Redirige vers l'URL Cloudinary du fichier (téléchargement direct).
-    """
-    session = firebase_service.get_session(session_id)
+# @router.get("/{session_id}/files/{file_id}/download")
+# async def download_file(
+#         session_id: str,
+#         file_id: str,
+#         current_user: dict = Depends(get_current_user)
+# ):
+#     """
+#     Redirige vers l'URL Cloudinary du fichier (téléchargement direct).
+#     """
+#     session = firebase_service.get_session(session_id)
 
-    if not session or session['userId'] != current_user['user_id']:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session non trouvée")
+#     if not session or session['userId'] != current_user['user_id']:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session non trouvée")
 
-    files = firebase_service.get_session_files(session_id)
-    file = next((f for f in files if f['file_id'] == file_id), None)
+#     files = firebase_service.get_session_files(session_id)
+#     file = next((f for f in files if f['file_id'] == file_id), None)
 
-    if not file:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier non trouvé")
+#     if not file:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier non trouvé")
 
-    return RedirectResponse(url=file['fileUrl'])
+#     return RedirectResponse(url=file['fileUrl'])
