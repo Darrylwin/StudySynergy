@@ -75,9 +75,13 @@ async def create_session(
                 'mime_type': file.content_type
             })
 
-        # 2. Préparer les fichiers pour Gemini
+        # 2. Préparer les fichiers pour Gemini (avec cloudinary_url pour re-upload si besoin)
         gemini_files = [
-            {'file_uri': f['gemini_uri'], 'mime_type': f['mime_type']}
+            {
+                'file_uri': f['gemini_uri'],
+                'mime_type': f['mime_type'],
+                'cloudinary_url': f['file_url']
+            }
             for f in uploaded_files
         ]
 
@@ -89,11 +93,9 @@ async def create_session(
 
         # 5. Mettre à jour les public_ids Cloudinary avec le vrai session_id
         for f in uploaded_files:
-            # Récupérer le nouveau public_id avec le bon session_id
             old_public_id = f['cloudinary_public_id']
             new_folder = f"studysynergy/sessions/{session_id}"
 
-            # Cloudinary: déplacer le fichier vers le bon dossier
             try:
                 result = cloudinary_service.cloudinary.uploader.rename(
                     old_public_id,
@@ -236,7 +238,6 @@ async def add_file_to_session(
             detail=f"Erreur lors de l'ajout du fichier: {str(e)}"
         )
     finally:
-        # Nettoyer le fichier temporaire
         if temp_path:
             try:
                 os.unlink(temp_path)
@@ -324,8 +325,13 @@ async def chat_about_course(
             detail="Aucun fichier dans cette session"
         )
 
+    # Inclure cloudinary_url pour permettre le re-upload si les fichiers Gemini ont expiré
     gemini_files = [
-        {'file_uri': f['geminiUri'], 'mime_type': f['mimeType']}
+        {
+            'file_uri': f['geminiUri'],
+            'mime_type': f['mimeType'],
+            'cloudinary_url': f['fileUrl']
+        }
         for f in files
     ]
 
