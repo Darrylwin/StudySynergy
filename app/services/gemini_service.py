@@ -5,12 +5,15 @@ import google.generativeai as genai
 from app.config import settings
 import json
 import re
+import os
+import tempfile
+import httpx
 from typing import List, Dict
 
 # Configurer Gemini avec la clé API
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
-# Modèle à utiliser (selon le cahier des charges)
+# Modèle à utiliser
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 
@@ -32,13 +35,69 @@ class GeminiService:
     def _prepare_files_for_gemini(gemini_files: List[Dict[str, str]]) -> List:
         """
         Prépare les fichiers au bon format pour l'API Gemini.
-        Convertit les URIs en objets File.
+        Les fichiers Gemini File API expirent après 48h.
+        Si un fichier est expiré, il est re-téléchargé depuis Cloudinary
+        et re-uploadé vers Gemini automatiquement.
         """
         files = []
+
         for f in gemini_files:
-            # Récupérer le fichier depuis son URI
-            file_obj = genai.get_file(name=f["file_uri"].split('/')[-1])
-            files.append(file_obj)
+            file_name = f["file_uri"].split('/')[-1]
+
+            try:
+                # Tenter de récupérer le fichier Gemini existant
+                file_obj = genai.get_file(name=file_name)
+                files.append(file_obj)
+
+            except Exception:
+                # Fichier expiré ou introuvable → re-upload depuis Cloudinary
+                cloudinary_url = f.get("cloudinary_url")
+                if not cloudinary_url:
+                    raise ValueError(
+                        f"Fichier Gemini expiré ('{file_name}') et aucune URL Cloudinary "
+                        f"disponible pour le re-upload."
+                    )
+
+                mime_type = f.get("mime_type", "application/octet-stream")
+
+                # Télécharger le fichier depuis Cloudinary
+                try:
+                    response = httpx.get(cloudinary_url, timeout=60.0)
+                    response.raise_for_status()
+                except httpx.HTTPError as e:
+                    raise ValueError(
+                        f"Impossible de télécharger le fichier depuis Cloudinary: {str(e)}"
+                    )
+
+                # Déterminer l'extension depuis le mime_type
+                ext_map = {
+                    "application/pdf": ".pdf",
+                    "image/jpeg": ".jpg",
+                    "image/png": ".png",
+                    "image/gif": ".gif",
+                    "image/webp": ".webp",
+                    "audio/mpeg": ".mp3",
+                    "audio/wav": ".wav",
+                    "audio/ogg": ".ogg",
+                    "video/mp4": ".mp4",
+                    "text/plain": ".txt",
+                }
+                suffix = ext_map.get(mime_type, "." + mime_type.split("/")[-1])
+
+                # Re-upload vers Gemini via fichier temporaire
+                tmp_path = None
+                try:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                        tmp.write(response.content)
+                        tmp_path = tmp.name
+
+                    uploaded = genai.upload_file(path=tmp_path, mime_type=mime_type)
+                    files.append(uploaded)
+
+                finally:
+                    if tmp_path and os.path.exists(tmp_path):
+                        os.unlink(tmp_path)
+
         return files
 
     @staticmethod
@@ -82,7 +141,7 @@ class GeminiService:
             data = json.loads(clean_json)
             return data['title'], data['summary']
         except json.JSONDecodeError as e:
-            raise ValueError(f"Erreur de parsing JSON (titre/résumé): {str(e)}\nContenu reçu: {clean_json[: 500]}")
+            raise ValueError(f"Erreur de parsing JSON (titre/résumé): {str(e)}\nContenu reçu: {clean_json[:500]}")
 
     @staticmethod
     def generate_quiz(gemini_files: List[Dict[str, str]], focus_section: str = None) -> dict:
@@ -130,7 +189,6 @@ class GeminiService:
         try:
             return json.loads(clean_json)
         except json.JSONDecodeError as e:
-            # Tenter une correction automatique
             fixed_json = GeminiService._try_fix_json(clean_json)
             try:
                 return json.loads(fixed_json)
@@ -232,7 +290,7 @@ class GeminiService:
             try:
                 return json.loads(fixed_json)
             except:
-                raise ValueError(f"Erreur de parsing JSON (notes): {str(e)}\nContenu reçu:  {clean_json[:500]}")
+                raise ValueError(f"Erreur de parsing JSON (notes): {str(e)}\nContenu reçu: {clean_json[:500]}")
 
     @staticmethod
     def chat_about_course(gemini_files: List[Dict[str, str]], user_message: str) -> str:
@@ -273,7 +331,6 @@ class GeminiService:
             return json_match.group(1).strip()
 
         # Si pas de markdown, nettoyer quand même
-        # Supprimer "json" au début si présent
         cleaned = text.strip()
         if cleaned.lower().startswith('json'):
             cleaned = cleaned[4:].strip()
