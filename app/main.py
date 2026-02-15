@@ -3,9 +3,8 @@ Initialisation de l'application FastAPI.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, session, tools
-from app.config import settings
 from app.routes import auth, session, tools, files
+from app.config import settings
 
 # Créer l'application FastAPI
 app = FastAPI(
