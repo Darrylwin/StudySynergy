@@ -37,14 +37,16 @@ class CloudinaryService:
             if file_ext in raw_types:
                 resource_type = "raw"
                 # Pour les fichiers raw, il faut spécifier le filename avec extension
+                # "auto" pour tout — Cloudinary détecte le bon type
                 result = cloudinary.uploader.upload(
                     file_buffer,
                     folder=f"studysynergy/sessions/{session_id}",
-                    resource_type=resource_type,
-                    use_filename=True,  # IMPORTANT: pour conserver le nom
+                    resource_type="auto",
+                    use_filename=True,
                     unique_filename=True,
                     overwrite=False,
-                    filename_override=file_name  # Force l'utilisation du nom de fichier
+                    filename_override=file_name,
+                    access_mode="public"
                 )
             else:
                 resource_type = "auto"
