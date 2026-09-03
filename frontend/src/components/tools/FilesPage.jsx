@@ -1,19 +1,8 @@
-// src/components/tools/FilesPage.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { sessionAPI, fileAPI } from '../../services/api';
-import {
-  ChevronLeft,
-  Loader2,
-  AlertCircle,
-  FileText,
-  Music,
-  Image as ImageIcon,
-  Video,
-  Download,
-  Eye
-} from 'lucide-react';
+import { ChevronLeft, AlertCircle, FileText, Download, Eye } from 'lucide-react';
 
 const FilesPage = () => {
   const { sessionId } = useParams();
@@ -27,25 +16,17 @@ const FilesPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="h-6 w-6 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error || !session) {
     return (
-      <div className="max-w-2xl mx-auto py-16 text-center">
-        <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-6" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Session non trouvée
-        </h2>
-        <button
-          onClick={() => navigate('/')}
-          className="btn-primary inline-flex items-center space-x-2"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          <span>Retour au tableau de bord</span>
-        </button>
+      <div className="max-w-md mx-auto py-20 px-6 text-center">
+        <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-4" />
+        <h2 className="text-lg font-semibold text-ink mb-4">Session non trouvée</h2>
+        <button onClick={() => navigate('/')} className="btn-secondary">← Retour</button>
       </div>
     );
   }
@@ -53,126 +34,69 @@ const FilesPage = () => {
   const sessionData = session?.data || session;
   const files = sessionData?.files || [];
 
-  const getFileIcon = (file) => {
-    const mimeType = file.mime_type || file.mimeType || '';
-    const fileName = file.filename || file.fileName || '';
-    
-    if (mimeType.includes('pdf') || fileName.endsWith('.pdf')) {
-      return <FileText className="h-5 w-5 text-red-500" />;
-    }
-    if (mimeType.includes('audio') || fileName.endsWith('.mp3')) {
-      return <Music className="h-5 w-5 text-green-500" />;
-    }
-    if (mimeType.includes('image') || fileName.endsWith('.jpg')) {
-      return <ImageIcon className="h-5 w-5 text-purple-500" />;
-    }
-    if (mimeType.includes('video') || fileName.endsWith('.mp4')) {
-      return <Video className="h-5 w-5 text-blue-500" />;
-    }
-    return <FileText className="h-5 w-5 text-gray-500" />;
-  };
-
   const formatFileSize = (bytes) => {
-    if (!bytes) return 'Taille inconnue';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    if (!bytes) return '';
+    const units = ['o', 'Ko', 'Mo'];
+    const i = Math.min(2, Math.floor(Math.log(bytes) / Math.log(1024)));
+    return `${(bytes / 1024 ** i).toFixed(1)} ${units[i]}`;
   };
 
-  const handleViewFile = (file) => {
-    const fileName = file.filename || file.fileName;
-    if (fileName) {
-      const fileUrl = fileAPI.getFileUrl(sessionId, fileName);
-      window.open(fileUrl, '_blank');
-    }
+  const handleView = (file) => {
+    const name = file.filename || file.fileName;
+    if (name) window.open(fileAPI.getFileUrl(sessionId, name), '_blank');
   };
 
-  const handleDownloadFile = (file) => {
-    const fileName = file.filename || file.fileName;
-    if (fileName) {
-      const fileUrl = fileAPI.getFileUrl(sessionId, fileName);
-      const a = document.createElement('a');
-      a.href = fileUrl;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+  const handleDownload = (file) => {
+    const name = file.filename || file.fileName;
+    if (!name) return;
+    const a = document.createElement('a');
+    a.href = fileAPI.getFileUrl(sessionId, name);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6">
+    <div className="max-w-3xl mx-auto px-6 py-8">
+      <button
+        onClick={() => navigate(`/session/${sessionId}`)}
+        className="flex items-center gap-1.5 text-sm text-muted hover:text-ink mb-6 transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Retour à la session
+      </button>
+
       <div className="mb-6">
-        <button
-          onClick={() => navigate(`/session/${sessionId}`)}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          <span>Retour à la session</span>
-        </button>
-        
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          {sessionData.title || 'Sans titre'} - Fichiers
-        </h1>
-        <p className="text-gray-600">
-          {files.length} fichier{files.length > 1 ? 's' : ''} analysé{files.length > 1 ? 's' : ''} par l'IA
-        </p>
+        <h1 className="text-2xl font-bold text-ink">{sessionData.title || 'Sans titre'} — Fichiers</h1>
+        <p className="text-sm text-muted mt-1">{files.length} fichier{files.length !== 1 ? 's' : ''}</p>
       </div>
 
       {files.length === 0 ? (
-        <div className="card text-center py-16">
-          <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            Aucun fichier
-          </h3>
-          <p className="text-gray-500">
-            Aucun fichier n'a été uploadé pour cette session.
-          </p>
+        <div className="card text-center py-16 text-muted">
+          <FileText className="h-8 w-8 mx-auto mb-3 opacity-40" />
+          <p className="text-sm">Aucun fichier uploadé pour cette session.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {files.map((file, index) => (
-            <div
-              key={index}
-              className="card flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center space-x-4 mb-3 sm:mb-0">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  {getFileIcon(file)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
-                    {file.filename || file.fileName || 'Fichier sans nom'}
-                  </p>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>{file.mime_type || file.mimeType || 'Type inconnu'}</span>
-                    <span>•</span>
-                    <span>{formatFileSize(file.size)}</span>
-                  </div>
-                </div>
+        <ul className="space-y-2">
+          {files.map((file, i) => (
+            <li key={i} className="card flex items-center gap-3 px-4 py-3">
+              <FileText className="h-4 w-4 text-muted shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-ink truncate">{file.filename || file.fileName || 'Sans nom'}</p>
+                <p className="text-xs text-muted">{file.mime_type || file.mimeType || ''} {formatFileSize(file.size) && `· ${formatFileSize(file.size)}`}</p>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handleViewFile(file)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
-                >
-                  <Eye className="h-4 w-4" />
-                  <span>Voir</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => handleView(file)} className="btn-secondary py-1 px-2.5 text-xs gap-1">
+                  <Eye className="h-3.5 w-3.5" /> Voir
                 </button>
-                <button
-                  onClick={() => handleDownloadFile(file)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Télécharger</span>
+                <button onClick={() => handleDownload(file)} className="btn-secondary py-1 px-2.5 text-xs gap-1">
+                  <Download className="h-3.5 w-3.5" /> Télécharger
                 </button>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

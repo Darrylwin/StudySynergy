@@ -10,13 +10,13 @@ import {
   BookOpen,
   CheckCircle,
   XCircle,
-  Star,
   Download,
   Volume2,
-  Sparkles,
+  Wand2,
   AlertCircle,
   HelpCircle,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -287,7 +287,7 @@ const FlashcardDeck = ({ sessionId, flashcardsData }) => {
                         }}
                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
                       >
-                        <Sparkles className="h-3 w-3 mr-1" />
+                        <Wand2 className="h-3 w-3 mr-1" />
                         Générer de nouvelles
                       </button>
                       <button
@@ -311,6 +311,7 @@ const FlashcardDeck = ({ sessionId, flashcardsData }) => {
       
       setDeck(extractedDeck);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flashcardsData, artifactsData, hasShownNotification]);
 
   const handleGenerateFlashcards = () => {
@@ -447,51 +448,28 @@ const FlashcardDeck = ({ sessionId, flashcardsData }) => {
 
   const isLoading = isLoadingArtifacts || isGenerating;
 
-  // Écran de chargement
+  // Loading
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-purple-100 rounded-full"></div>
-          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-purple-600 rounded-full"></div>
-        </div>
-        <p className="mt-4 text-gray-600 font-medium">
-          {isGenerating ? 'Génération des flashcards...' : 'Chargement...'}
-        </p>
-        <p className="text-sm text-gray-400 mt-2">
-          Veuillez patienter
-        </p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-muted">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <p className="text-sm">{isGenerating ? 'Génération des flashcards...' : 'Chargement...'}</p>
       </div>
     );
   }
 
-  // Écran d'erreur
+  // Error
   if (artifactsError) {
     return (
-      <div className="text-center py-16 p-4">
-        <AlertCircle className="h-16 w-16 text-red-300 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">
-          Erreur de chargement
-        </h3>
-        <p className="text-gray-500 mb-6 max-w-md mx-auto">
-          {artifactsError.message || 'Impossible de charger les flashcards'}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={() => refetchArtifacts()}
-            className="px-5 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-          >
-            <RotateCw className="h-4 w-4 inline mr-2" />
-            Réessayer
+      <div className="text-center py-16 px-4">
+        <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+        <p className="text-sm text-muted mb-4">{artifactsError.message || 'Impossible de charger les flashcards'}</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => refetchArtifacts()} className="btn-secondary gap-2">
+            <RotateCw className="h-4 w-4" />Réessayer
           </button>
-          <button
-            onClick={handleGenerateFlashcards}
-            disabled={isGenerating}
-            className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-          >
-            <Sparkles className="h-4 w-4 inline mr-2" />
-            Générer des flashcards
+          <button onClick={handleGenerateFlashcards} disabled={isGenerating} className="btn-primary gap-2">
+            <Wand2 className="h-4 w-4" />Générer des flashcards
           </button>
         </div>
       </div>
@@ -500,386 +478,155 @@ const FlashcardDeck = ({ sessionId, flashcardsData }) => {
 
   // Écran principal
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      {/* État vide ou avec flashcards */}
+    <div className="max-w-2xl mx-auto px-4 py-6">
       {deck.length === 0 ? (
-        // ÉCRAN SANS FLASHCARDS
-        <div className="text-center py-12">
-          <div className="h-20 w-20 mx-auto mb-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-            <BookOpen className="h-10 w-10 text-white" />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Aucune flashcard disponible
-          </h2>
-          
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            {artifactsData?.artifacts?.quiz 
-              ? "Vous avez un quiz disponible. Vous pouvez le convertir en flashcards ou en générer de nouvelles."
-              : "Générez des flashcards pour commencer à réviser votre cours."
-            }
+        // Écran vide
+        <div className="text-center py-20">
+          <BookOpen className="h-10 w-10 text-muted mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-semibold text-ink mb-2">Aucune flashcard disponible</h3>
+          <p className="text-sm text-muted mb-6 max-w-sm mx-auto">
+            {artifactsData?.artifacts?.quiz
+              ? 'Un quiz est disponible. Convertissez-le ou générez de nouvelles flashcards.'
+              : 'Générez des flashcards pour commencer à réviser.'}
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <button
-              onClick={handleGenerateFlashcards}
-              disabled={isGenerating}
-              className="flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span className="font-medium">Génération...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-5 w-5" />
-                  <span className="font-medium">Générer des flashcards</span>
-                </>
-              )}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onClick={handleGenerateFlashcards} disabled={isGenerating} className="btn-primary gap-2">
+              {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" />Génération...</> : <><Wand2 className="h-4 w-4" />Générer des flashcards</>}
             </button>
-            
             {artifactsData?.artifacts?.quiz && (
-              <button
-                onClick={handleForceConvertQuiz}
-                className="flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all"
-              >
-                <Zap className="h-5 w-5" />
-                <span className="font-medium">Convertir le quiz en flashcards</span>
+              <button onClick={handleForceConvertQuiz} className="btn-secondary gap-2">
+                <Zap className="h-4 w-4" />Convertir le quiz
               </button>
             )}
           </div>
-          
-          {/* Stats des artefacts disponibles */}
-          {artifactsData?.artifacts && (
-            <div className="mt-8 p-6 bg-gray-50 rounded-xl max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Artefacts disponibles</h3>
-              <div className="space-y-3">
-                {artifactsData.artifacts.quiz && (
-                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                    <div className="flex items-center space-x-3">
-                      <HelpCircle className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium text-gray-800">Quiz</p>
-                        <p className="text-sm text-gray-600">
-                          {artifactsData.artifacts.quiz.questions?.length || 10} questions disponibles
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleForceConvertQuiz}
-                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Convertir
-                    </button>
-                  </div>
-                )}
-                
-                {!artifactsData.artifacts.flashcards && !artifactsData.artifacts.quiz && (
-                  <p className="text-gray-500 text-center py-4">
-                    Aucun artefact pédagogique généré pour cette session.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       ) : (
-        // ÉCRAN AVEC FLASHCARDS
+        // Écran avec flashcards
         <>
-          {/* Badge de source */}
-          <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium mb-4">
-            <CheckCircle className="h-4 w-4 mr-1" />
-            {deck.length} flashcards disponibles
-            {deck[0]?.category === "Quiz converti" && (
-              <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
-                Converti depuis quiz
-              </span>
-            )}
-          </div>
-
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-                <BookOpen className="h-7 w-7 text-purple-600" />
-                <span>Deck de Flashcards</span>
-              </h2>
-              <p className="text-gray-600 mt-1">
-                {deck.length} cartes • {knownCards.size} connues • {deck.length > 0 ? Math.round((knownCards.size / deck.length) * 100) : 0}% maîtrisé
+              <p className="text-xs font-semibold text-muted uppercase tracking-wider">Flashcards</p>
+              <p className="text-sm text-ink mt-0.5">
+                {deck.length} cartes · {knownCards.size} connues · {deck.length > 0 ? Math.round((knownCards.size / deck.length) * 100) : 0}% maîtrisé
               </p>
             </div>
-            
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <select
                 value={filter}
-                onChange={(e) => {
-                  setFilter(e.target.value);
-                  setCurrentCard(0);
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => { setFilter(e.target.value); setCurrentCard(0); }}
+                className="input w-auto text-xs py-1.5"
               >
-                <option value="all">Toutes les cartes</option>
+                <option value="all">Toutes</option>
                 <option value="known">Connues</option>
                 <option value="difficult">Difficiles</option>
               </select>
-              
-              <button
-                onClick={handleShuffle}
-                className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Mélanger"
-              >
-                <Shuffle className="h-5 w-5 text-gray-600" />
+              <button onClick={handleShuffle} className="p-1.5 text-muted hover:text-ink transition-colors" title="Mélanger">
+                <Shuffle className="h-4 w-4" />
               </button>
-              <button
-                onClick={handleReset}
-                className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Réinitialiser"
-              >
-                <RotateCw className="h-5 w-5 text-gray-600" />
+              <button onClick={handleReset} className="p-1.5 text-muted hover:text-ink transition-colors" title="Réinitialiser">
+                <RotateCw className="h-4 w-4" />
               </button>
-              <button
-                onClick={handleExport}
-                className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Exporter"
-              >
-                <Download className="h-5 w-5 text-gray-600" />
+              <button onClick={handleExport} className="p-1.5 text-muted hover:text-ink transition-colors" title="Exporter">
+                <Download className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {/* Flashcard */}
-          <div className="mb-8">
-            <div 
-              className="relative h-96 cursor-pointer perspective-1000"
-              onClick={() => setIsFlipped(!isFlipped)}
-            >
-              <div className={`absolute inset-0 w-full h-full transition-all duration-500 preserve-3d ${
-                isFlipped ? 'rotate-y-180' : ''
-              }`}>
-                {/* Recto */}
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-white to-purple-50 rounded-2xl shadow-lg border-2 border-purple-200 backface-hidden flex flex-col items-center justify-center p-8">
-                  <div className="text-center">
-                    <div className="inline-flex items-center space-x-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6">
-                      <span>Recto</span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6 whitespace-pre-wrap">
-                      {currentCardData?.front || 'Question'}
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Cliquez pour voir la réponse
-                    </p>
-                    {currentCardData?.category && (
-                      <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                        {currentCardData.category}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="absolute bottom-4 right-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTextToSpeech(currentCardData?.front || '');
-                      }}
-                      className="p-2 hover:bg-purple-100 rounded-full transition-colors"
-                    >
-                      <Volume2 className="h-5 w-5 text-purple-600" />
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Verso */}
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg border-2 border-blue-200 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-8">
-                  <div className="text-center">
-                    <div className="inline-flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
-                      <span>Verso</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                      Réponse
-                    </h3>
-                    <div className="text-lg text-gray-700 mb-6 whitespace-pre-wrap">
-                      {typeof currentCardData?.back === 'string' 
-                        ? currentCardData.back
-                        : JSON.stringify(currentCardData?.back, null, 2)
-                      }
-                    </div>
-                    
-                    {currentCardData?.explanation && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-700">
-                          <span className="font-medium">Explication :</span> {currentCardData.explanation}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <p className="text-sm text-gray-500 mt-4">
-                      Cliquez pour revenir à la question
-                    </p>
-                  </div>
-                  
-                  <div className="absolute bottom-4 right-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTextToSpeech(typeof currentCardData?.back === 'string' 
-                          ? currentCardData.back 
-                          : 'Réponse disponible'
-                        );
-                      }}
-                      className="p-2 hover:bg-blue-100 rounded-full transition-colors"
-                    >
-                      <Volume2 className="h-5 w-5 text-blue-600" />
-                    </button>
-                  </div>
-                </div>
+          {/* Progress */}
+          <div className="flex items-center justify-between text-xs text-muted mb-4">
+            <span>Carte {currentCard + 1} sur {filteredDeck.length > 0 ? filteredDeck.length : deck.length}</span>
+            <span>{isFlipped ? 'Verso' : 'Recto'}</span>
+          </div>
+
+          {/* Card */}
+          <div
+            className="card mb-5 cursor-pointer select-none min-h-[260px] flex flex-col items-center justify-center p-8 text-center transition-all hover:shadow-md"
+            onClick={() => setIsFlipped(!isFlipped)}
+            style={{ perspective: '1000px' }}
+          >
+            {!isFlipped ? (
+              <div className="w-full">
+                <span className="tag bg-faint text-muted mb-4 inline-block">Recto · cliquez pour retourner</span>
+                <h3 className="text-xl font-semibold text-ink whitespace-pre-wrap">{currentCardData?.front || 'Question'}</h3>
+                {currentCardData?.category && (
+                  <span className="tag bg-faint text-muted mt-4 inline-block">{currentCardData.category}</span>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleTextToSpeech(currentCardData?.front || ''); }}
+                  className="mt-4 p-1.5 text-muted hover:text-ink transition-colors"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </button>
               </div>
-            </div>
-            
-            <div className="text-center mt-4 text-gray-500 text-sm">
-              <p>Carte {currentCard + 1} sur {deck.length}</p>
-            </div>
+            ) : (
+              <div className="w-full">
+                <span className="tag bg-faint text-muted mb-4 inline-block">Verso · cliquez pour retourner</span>
+                <p className="text-base text-ink whitespace-pre-wrap">
+                  {typeof currentCardData?.back === 'string' ? currentCardData.back : JSON.stringify(currentCardData?.back, null, 2)}
+                </p>
+                {currentCardData?.explanation && (
+                  <p className="text-xs text-muted mt-4 border-t border-stone pt-3">{currentCardData.explanation}</p>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleTextToSpeech(typeof currentCardData?.back === 'string' ? currentCardData.back : ''); }}
+                  className="mt-4 p-1.5 text-muted hover:text-ink transition-colors"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handlePrevious}
-                disabled={currentCard === 0}
-                className="flex items-center space-x-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="h-5 w-5" />
-                <span>Précédent</span>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <button onClick={handlePrevious} disabled={currentCard === 0} className="btn-secondary gap-1.5 disabled:opacity-40">
+                <ChevronLeft className="h-4 w-4" />Préc.
               </button>
-              
-              <button
-                onClick={handleNext}
-                disabled={currentCard >= deck.length - 1}
-                className="flex items-center space-x-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <span>Suivant</span>
-                <ChevronRight className="h-5 w-5" />
+              <button onClick={handleNext} disabled={currentCard >= deck.length - 1} className="btn-secondary gap-1.5 disabled:opacity-40">
+                Suiv.<ChevronRight className="h-4 w-4" />
               </button>
             </div>
-            
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => markAsKnown(currentCard)}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-colors ${
-                  knownCards.has(currentCardId)
-                    ? 'bg-green-100 text-green-700'
-                    : 'hover:bg-green-50 text-gray-700'
-                }`}
+                className={`btn gap-1.5 text-sm border ${knownCards.has(currentCardId) ? 'border-green-300 bg-green-50 text-green-700' : 'border-stone bg-white text-muted hover:text-ink'}`}
               >
-                <CheckCircle className="h-5 w-5" />
-                <span>{knownCards.has(currentCardId) ? 'Connue ✓' : 'Marquer comme connue'}</span>
+                <CheckCircle className="h-4 w-4" />
+                {knownCards.has(currentCardId) ? 'Connue' : 'Je connais'}
               </button>
-              
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => setCardDifficulty(currentCard, 'easy')}
-                  className={`p-2 rounded-lg ${
-                    difficulty[currentCardId] === 'easy'
-                      ? 'bg-blue-100 text-blue-600'
-                      : 'hover:bg-gray-100 text-gray-500'
-                  }`}
-                  title={difficulty[currentCardId] === 'easy' ? "Facile ✓" : "Marquer comme facile"}
-                >
-                  <Star className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setCardDifficulty(currentCard, 'hard')}
-                  className={`p-2 rounded-lg ${
-                    difficulty[currentCardId] === 'hard'
-                      ? 'bg-red-100 text-red-600'
-                      : 'hover:bg-gray-100 text-gray-500'
-                  }`}
-                  title={difficulty[currentCardId] === 'hard' ? "Difficile ✓" : "Marquer comme difficile"}
-                >
-                  <XCircle className="h-5 w-5" />
-                </button>
-              </div>
+              <button
+                onClick={() => setCardDifficulty(currentCard, 'hard')}
+                className={`p-2 rounded-lg border transition-colors ${difficulty[currentCardId] === 'hard' ? 'border-red-300 bg-red-50 text-red-600' : 'border-stone text-muted hover:text-ink'}`}
+                title="Difficile"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          {/* Stats - SUPPRESSION DU POURCENTAGE DE PROGRESSION */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Cartes maîtrisées</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {knownCards.size}
-                  </p>
-                </div>
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="card p-4">
+              <p className="text-xs text-muted mb-1">Maîtrisées</p>
+              <p className="text-2xl font-bold text-ink">{knownCards.size}</p>
             </div>
-            
-            <div className="card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Cartes difficiles</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {Object.values(difficulty).filter(d => d === 'hard').length}
-                  </p>
-                </div>
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <XCircle className="h-6 w-6 text-red-600" />
-                </div>
-              </div>
+            <div className="card p-4">
+              <p className="text-xs text-muted mb-1">Difficiles</p>
+              <p className="text-2xl font-bold text-ink">{Object.values(difficulty).filter(d => d === 'hard').length}</p>
             </div>
+          </div>
+
+          {/* Regen */}
+          <div className="mt-6 pt-5 border-t border-stone flex items-center justify-between">
+            <p className="text-sm text-muted">Besoin d'autres flashcards ?</p>
+            <button onClick={handleGenerateFlashcards} disabled={isGenerating} className="btn-secondary gap-2 text-xs">
+              {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Génération...</> : <><Wand2 className="h-3.5 w-3.5" />Générer</>}
+            </button>
           </div>
         </>
       )}
-
-      {/* Bouton pour générer de nouvelles flashcards */}
-      {deck.length > 0 && (
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Besoin de plus de flashcards ?</h3>
-              <p className="text-gray-600 text-sm">Générez un nouveau deck basé sur votre cours</p>
-            </div>
-            <button
-              onClick={handleGenerateFlashcards}
-              disabled={isGenerating}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Génération en cours...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-5 w-5" />
-                  <span>Générer de nouvelles flashcards</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Styles CSS */}
-      <style jsx>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,13 +1,46 @@
-/* Supprime tout le contenu existant et colle ceci : */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Styles personnalisés */
-body {
-  font-family: 'Inter', sans-serif;
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f8f7f4;
+    color: #111;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * { box-sizing: border-box; }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-150 cursor-pointer select-none;
+  }
+  .btn-primary {
+    @apply btn bg-[#111] text-white hover:bg-[#222] active:scale-95 shadow-sm;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-[#111] border border-[#e5e2db] hover:bg-[#f8f7f4] active:scale-95;
+  }
+  .btn-accent {
+    @apply btn bg-violet-600 text-white hover:bg-violet-700 active:scale-95 shadow-sm;
+  }
+  .card {
+    @apply bg-white rounded-2xl border border-[#e5e2db] shadow-sm;
+  }
+  .input {
+    @apply w-full px-3.5 py-2.5 text-sm bg-white border border-[#e5e2db] rounded-xl
+           placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400
+           transition-colors;
+  }
+  .tag {
+    @apply inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium;
+  }
+  .surface {
+    @apply bg-[#f8f7f4];
+  }
 }

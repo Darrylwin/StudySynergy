@@ -2,9 +2,9 @@
 Initialisation de l'application FastAPI.
 """
 from fastapi import FastAPI
-from fastapi.middleware. cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth, session, tools, files
-from app. config import settings
+from app.config import settings
 
 # Créer l'application FastAPI
 app = FastAPI(
@@ -26,8 +26,8 @@ app.add_middleware(
 )
 
 # Enregistrer les routes
-app. include_router(auth.router)
-app.include_router(session. router)
+app.include_router(auth.router)
+app.include_router(session.router)
 app.include_router(tools.router)
 app.include_router(files.router)
 
