@@ -2,13 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @layer base {
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: #f8f7f4;
-    color: #111;
+    background-color: #f7f6f3;
+    color: #0f0f0f;
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -21,26 +19,24 @@
     @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-150 cursor-pointer select-none;
   }
   .btn-primary {
-    @apply btn bg-[#111] text-white hover:bg-[#222] active:scale-95 shadow-sm;
+    @apply btn bg-[#0f0f0f] text-white hover:bg-[#2a2a2a] active:scale-[0.98];
   }
   .btn-secondary {
-    @apply btn bg-white text-[#111] border border-[#e5e2db] hover:bg-[#f8f7f4] active:scale-95;
+    @apply btn bg-white text-[#0f0f0f] border border-[#e8e5df] hover:bg-[#f7f6f3] active:scale-[0.98];
   }
+  /* btn-accent = même que primary, un seul style fort */
   .btn-accent {
-    @apply btn bg-violet-600 text-white hover:bg-violet-700 active:scale-95 shadow-sm;
+    @apply btn-primary;
   }
   .card {
-    @apply bg-white rounded-2xl border border-[#e5e2db] shadow-sm;
+    @apply bg-white rounded-2xl border border-[#e8e5df];
   }
   .input {
-    @apply w-full px-3.5 py-2.5 text-sm bg-white border border-[#e5e2db] rounded-xl
-           placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400
+    @apply w-full px-3.5 py-2.5 text-sm bg-white border border-[#e8e5df] rounded-xl
+           placeholder-[#b0b0b0] focus:outline-none focus:ring-2 focus:ring-[#0f0f0f]/10 focus:border-[#0f0f0f]
            transition-colors;
   }
   .tag {
     @apply inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium;
-  }
-  .surface {
-    @apply bg-[#f8f7f4];
   }
 }

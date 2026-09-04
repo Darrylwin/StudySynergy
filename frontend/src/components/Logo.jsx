@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Logo component — utilise l'image /logo.png
+ * Logo component - utilise l'image /logo.png
  * Sizes: 'sm' = 28px, 'md' = 36px, 'lg' = 44px, 'xl' = 56px
  */
 const sizes = {

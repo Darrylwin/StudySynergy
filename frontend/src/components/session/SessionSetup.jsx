@@ -104,7 +104,7 @@ const SessionSetup = () => {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-ink">Nouvelle session</h1>
         <p className="text-sm text-muted mt-1">
-          Importez vos fichiers de cours — l'IA génère résumé, quiz et flashcards automatiquement.
+          Importez vos fichiers de cours. L'IA génère résumé, quiz et flashcards automatiquement.
         </p>
       </div>
 
@@ -116,12 +116,12 @@ const SessionSetup = () => {
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all mb-6 cursor-pointer ${
           dragActive
-            ? 'border-violet-400 bg-violet-50'
-            : 'border-stone hover:border-violet-300 hover:bg-violet-50/40'
+            ? 'border-ink bg-gray-50'
+            : 'border-stone hover:border-gray-400 hover:bg-gray-50/50'
         }`}
       >
-        <div className="h-14 w-14 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Upload className="h-7 w-7 text-violet-600" />
+        <div className="h-14 w-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Upload className="h-7 w-7 text-gray-600" />
         </div>
         <p className="text-sm font-semibold text-ink mb-1">Déposez vos fichiers ici</p>
         <p className="text-xs text-muted mb-5">PDF, Word, images, audio, vidéo · Max 50 Mo</p>

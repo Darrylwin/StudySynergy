@@ -41,64 +41,67 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-faint flex">
-      {/* Left panel — decorative */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 to-violet-800 flex-col items-center justify-center p-12 text-white">
-        <div className="max-w-sm">
-          <div className="flex items-center gap-3 mb-10">
-            <Logo size="md" />
-            <span className="text-xl font-bold">StudySynergy</span>
-          </div>
-          <h2 className="text-3xl font-bold mb-4 leading-tight">
+
+      {/* Panneau gauche */}
+      <div className="hidden lg:flex lg:w-5/12 bg-ink flex-col justify-between p-12">
+        <div className="flex items-center gap-2.5">
+          <Logo size="sm" />
+          <span className="font-bold text-white text-base">StudySynergy</span>
+        </div>
+
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-4 leading-snug">
             Révisez plus vite,<br />retenez mieux.
           </h2>
-          <p className="text-violet-200 text-sm leading-relaxed mb-8">
-            Importez vos cours et obtenez instantanément résumés intelligents, 
+          <p className="text-gray-400 text-sm leading-relaxed mb-8">
+            Importez vos cours et obtenez instantanément résumés intelligents,
             quiz personnalisés et flashcards générés par Gemini AI.
           </p>
           <div className="space-y-3">
             {[
-              'Résumé complet en secondes',
+              'Résumé complet en quelques secondes',
               'Quiz avec corrections détaillées',
               'Flashcards pour mémoriser efficacement',
-              'Tous formats supportés (PDF, audio, vidéo…)',
+              'PDF, audio, vidéo et plus encore',
             ].map(f => (
-              <div key={f} className="flex items-center gap-2.5 text-sm text-violet-100">
-                <div className="h-4 w-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                  <div className="h-1.5 w-1.5 rounded-full bg-white" />
-                </div>
+              <div key={f} className="flex items-center gap-3 text-sm text-gray-300">
+                <div className="h-1.5 w-1.5 rounded-full bg-gray-500 shrink-0" />
                 {f}
               </div>
             ))}
           </div>
         </div>
+
+        <p className="text-xs text-gray-600">© 2024 StudySynergy</p>
       </div>
 
-      {/* Right panel — form */}
+      {/* Panneau droit */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
+
+          {/* Logo mobile uniquement */}
+          <div className="flex items-center gap-2 mb-10 lg:hidden">
             <Logo size="sm" />
             <span className="font-bold text-lg">StudySynergy</span>
           </div>
 
           <h1 className="text-2xl font-bold text-ink mb-1">
-            {isLogin ? 'Bienvenue' : 'Créer un compte'}
+            {isLogin ? 'Connexion' : 'Créer un compte'}
           </h1>
-          <p className="text-sm text-muted mb-7">
-            {isLogin ? 'Connectez-vous pour accéder à vos sessions.' : 'Gratuit · 3 sessions incluses · Sans carte bancaire.'}
+          <p className="text-sm text-muted mb-8">
+            {isLogin
+              ? 'Accédez à vos sessions et outils de révision.'
+              : '3 sessions gratuites incluses, sans carte bancaire.'}
           </p>
 
           {/* Tabs */}
-          <div className="flex gap-1 p-1 bg-faint rounded-xl border border-stone mb-6">
+          <div className="flex gap-1 p-1 bg-faint rounded-xl border border-stone mb-7">
             {[['Connexion', true], ['Inscription', false]].map(([label, val]) => (
               <button
                 key={label}
                 onClick={() => { setIsLogin(val); setLocalError(''); }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  isLogin === val
-                    ? 'bg-white text-ink shadow-sm'
-                    : 'text-muted hover:text-ink'
+                  isLogin === val ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'
                 }`}
               >
                 {label}
@@ -148,19 +151,19 @@ const Login = () => {
               </div>
             )}
 
-            <button type="submit" disabled={authLoading} className="btn-accent w-full justify-center py-3 mt-1">
+            <button type="submit" disabled={authLoading} className="btn-primary w-full justify-center py-3 mt-1">
               {authLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   {isLogin ? 'Connexion...' : 'Inscription...'}
                 </span>
               ) : (
-                isLogin ? 'Se connecter' : "Créer mon compte"
+                isLogin ? 'Se connecter' : 'Créer mon compte'
               )}
             </button>
           </form>
 
-          <p className="text-xs text-muted text-center mt-5">
+          <p className="text-xs text-muted text-center mt-6">
             En continuant, vous acceptez nos conditions d'utilisation.
           </p>
         </div>

@@ -68,7 +68,7 @@ const FilesPage = () => {
       </button>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">{sessionData.title || 'Sans titre'} — Fichiers</h1>
+        <h1 className="text-2xl font-bold text-ink">{sessionData.title || 'Sans titre'} · Fichiers</h1>
         <p className="text-sm text-muted mt-1">{files.length} fichier{files.length !== 1 ? 's' : ''}</p>
       </div>
 

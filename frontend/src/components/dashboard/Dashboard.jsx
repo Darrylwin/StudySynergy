@@ -45,7 +45,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <span className="h-6 w-6 border-2 border-ink/20 border-t-violet-600 rounded-full animate-spin" />
+        <span className="h-6 w-6 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
       </div>
     );
   }
@@ -82,7 +82,7 @@ const Dashboard = () => {
       {sessions.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-8">
           {[
-            { label: 'Sessions', val: sessions.length, icon: BookOpen, color: 'text-violet-600 bg-violet-50' },
+            { label: 'Sessions', val: sessions.length, icon: BookOpen, color: 'text-gray-600 bg-gray-100' },
             { label: 'Prêtes', val: sessions.filter(s => !s.status || s.status === 'ready').length, icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50' },
             { label: 'En cours', val: sessions.filter(s => s.status === 'processing').length, icon: RefreshCw, color: 'text-amber-600 bg-amber-50' },
           ].map(s => (

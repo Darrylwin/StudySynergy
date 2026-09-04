@@ -86,7 +86,7 @@ const Sidebar = ({ mobile = false, onClose }) => {
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
       isActive
-        ? 'bg-violet-50 text-violet-700 font-semibold'
+        ? 'bg-faint text-ink font-semibold'
         : 'text-muted hover:text-ink hover:bg-faint'
     }`;
 
@@ -94,7 +94,7 @@ const Sidebar = ({ mobile = false, onClose }) => {
     const isActive = activeTool === id;
     return `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full text-left transition-all ${
       isActive
-        ? 'bg-violet-50 text-violet-700 font-semibold'
+        ? 'bg-faint text-ink font-semibold'
         : 'text-muted hover:text-ink hover:bg-faint'
     }`;
   };
@@ -135,7 +135,7 @@ const Sidebar = ({ mobile = false, onClose }) => {
           </ul>
         </div>
 
-        {/* Session tools — toujours visibles */}
+        {/* Session tools - toujours visibles */}
         <div>
           <div className="flex items-center justify-between px-3 mb-2">
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Outils</p>
@@ -155,7 +155,7 @@ const Sidebar = ({ mobile = false, onClose }) => {
                   <tool.icon className="h-4 w-4 shrink-0" />
                   {tool.name}
                   {!tool.href && (
-                    <span className="ml-auto text-[10px] text-stone">—</span>
+                    <span className="ml-auto text-[10px] text-stone">...</span>
                   )}
                 </button>
               </li>
@@ -167,7 +167,7 @@ const Sidebar = ({ mobile = false, onClose }) => {
       {/* User */}
       <div className="border-t border-stone px-3 py-3">
         <div className="flex items-center gap-3 px-1">
-          <div className="h-8 w-8 bg-violet-100 text-violet-700 rounded-xl flex items-center justify-center text-xs font-bold shrink-0">
+          <div className="h-8 w-8 bg-gray-100 text-ink rounded-xl flex items-center justify-center text-xs font-bold shrink-0">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">

@@ -285,7 +285,7 @@ const FlashcardDeck = ({ sessionId, flashcardsData }) => {
                           generateFlashcardsMutation.mutate();
                           toast.dismiss(t.id);
                         }}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-ink hover:bg-gray-800"
                       >
                         <Wand2 className="h-3 w-3 mr-1" />
                         Générer de nouvelles

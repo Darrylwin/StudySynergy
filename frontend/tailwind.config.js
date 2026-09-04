@@ -4,22 +4,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        ink: '#111111',
-        muted: '#888888',
-        faint: '#f8f7f4',
-        stone: '#e5e2db',
-        accent: '#7c3aed',
+        ink: '#0f0f0f',
+        muted: '#8a8a8a',
+        faint: '#f7f6f3',
+        stone: '#e8e5df',
+        accent: '#0f0f0f',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
-      borderRadius: {
-        '2xl': '1rem',
-        '3xl': '1.5rem',
-      },
       boxShadow: {
-        card: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-        float: '0 8px 30px rgba(0,0,0,0.08)',
+        card: '0 1px 3px rgba(0,0,0,0.06)',
+        float: '0 8px 40px rgba(0,0,0,0.10)',
       },
     },
   },

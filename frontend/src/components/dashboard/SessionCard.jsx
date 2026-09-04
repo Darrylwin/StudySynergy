@@ -94,7 +94,7 @@ const SessionCard = ({ session }) => {
           <button
             key={t.label}
             onClick={() => navigate(t.path)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted hover:text-violet-700 hover:bg-violet-50 transition-colors font-medium"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted hover:text-ink hover:bg-faint transition-colors font-medium"
           >
             <t.icon className="h-3.5 w-3.5" />
             {t.label}
